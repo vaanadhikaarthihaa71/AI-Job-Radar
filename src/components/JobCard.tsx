@@ -1,12 +1,23 @@
 import React from 'react';
-import { ExternalLink, MapPin, Globe, Building2, Tag, Clock } from 'lucide-react';
+import { ExternalLink, MapPin, Globe, Building2, Tag, Clock, Star, CheckCircle, EyeOff } from 'lucide-react';
 import { Job } from '../types/job';
+import { JobStatus } from '../hooks/useJobStatus';
 
 interface JobCardProps {
   job: Job;
+  status: JobStatus;
+  isSelected?: boolean;
+  onSetStatus: (status: JobStatus) => void;
+  onToggleSave: () => void;
 }
 
-export const JobCard: React.FC<JobCardProps> = ({ job }) => {
+export const JobCard: React.FC<JobCardProps> = ({
+  job,
+  status,
+  isSelected = false,
+  onSetStatus,
+  onToggleSave,
+}) => {
   // Calculate detection delay string
   const calculateDelayString = (): string | null => {
     if (!job.posted_at || !job.detected_at) return null;
@@ -27,17 +38,23 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
 
   const delayText = calculateDelayString();
 
-  // Score color helper
   const getScoreBadgeClass = (score: number) => {
     if (score >= 80) return 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
     if (score >= 50) return 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300';
     return 'bg-slate-800 border-slate-700 text-slate-400';
   };
 
+  const isSaved = status === 'saved';
+  const isApplied = status === 'applied';
+
   return (
     <div
-      className={`glass-panel glass-panel-hover rounded-xl p-5 mb-3.5 transition-all duration-300 relative overflow-hidden ${
+      className={`glass-panel glass-panel-hover rounded-xl p-5 mb-3.5 transition-all duration-200 relative overflow-hidden ${
         job.isNew ? 'new-job-highlight' : ''
+      } ${
+        isSelected
+          ? 'ring-2 ring-indigo-500 border-indigo-500/50 shadow-xl bg-slate-900/90'
+          : 'border-slate-800/80'
       }`}
     >
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -45,7 +62,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
         {/* Main Content */}
         <div className="space-y-2.5 flex-1 min-w-0">
           
-          {/* Header Row: Title & Company */}
+          {/* Header Row: Title & Link */}
           <div>
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <h3 className="text-base font-semibold text-white tracking-tight hover:text-indigo-300 transition-colors">
@@ -55,7 +72,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
                 </a>
               </h3>
             </div>
-            
+
             <div className="flex items-center gap-3 text-xs text-slate-400 flex-wrap">
               <span className="flex items-center gap-1 font-medium text-slate-300">
                 <Building2 className="w-3.5 h-3.5 text-indigo-400" />
@@ -111,8 +128,9 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
 
         </div>
 
-        {/* Score Badge */}
-        <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 border-t sm:border-t-0 border-slate-800/60 pt-3 sm:pt-0 shrink-0">
+        {/* Right Controls Column: Score & Status Buttons */}
+        <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-3 border-t sm:border-t-0 border-slate-800/60 pt-3 sm:pt-0 shrink-0">
+          
           <div
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-mono font-bold text-xs ${getScoreBadgeClass(
               job.score
@@ -121,11 +139,46 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
             <span>Match {job.score}/100</span>
           </div>
 
-          {job.seniority && (
-            <span className="text-[11px] text-slate-400 font-medium">
-              {job.seniority}
-            </span>
-          )}
+          {/* Status Action Buttons */}
+          <div className="flex items-center gap-1">
+            
+            {/* Bookmark / Save */}
+            <button
+              onClick={onToggleSave}
+              title={isSaved ? 'Remove from Saved' : 'Save Job (Shortcut: S)'}
+              className={`p-1.5 rounded-lg border transition-all ${
+                isSaved
+                  ? 'bg-amber-500/20 border-amber-500/40 text-amber-400'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-amber-400 hover:border-slate-700'
+              }`}
+            >
+              <Star className={`w-3.5 h-3.5 ${isSaved ? 'fill-amber-400' : ''}`} />
+            </button>
+
+            {/* Mark as Applied */}
+            <button
+              onClick={() => onSetStatus(isApplied ? 'active' : 'applied')}
+              title={isApplied ? 'Mark as Not Applied' : 'Mark as Applied'}
+              className={`p-1.5 rounded-lg border transition-all ${
+                isApplied
+                  ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-emerald-400 hover:border-slate-700'
+              }`}
+            >
+              <CheckCircle className={`w-3.5 h-3.5 ${isApplied ? 'fill-emerald-400/20' : ''}`} />
+            </button>
+
+            {/* Hide Job */}
+            <button
+              onClick={() => onSetStatus('hidden')}
+              title="Hide Job Listing"
+              className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-rose-400 hover:border-slate-700 transition-all"
+            >
+              <EyeOff className="w-3.5 h-3.5" />
+            </button>
+
+          </div>
+
         </div>
 
       </div>

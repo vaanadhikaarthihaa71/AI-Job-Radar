@@ -1,26 +1,36 @@
 import React from 'react';
 import { format, isToday, isYesterday } from 'date-fns';
 import { JobCard } from './JobCard';
+import { EmptyState } from './EmptyState';
 import { Job } from '../types/job';
-import { Calendar, Inbox } from 'lucide-react';
+import { Calendar } from 'lucide-react';
+import { JobStatus } from '../hooks/useJobStatus';
+import { MainTab } from './FilterBar';
 
 interface JobFeedProps {
   jobs: Job[];
+  activeTab: MainTab;
+  selectedIndex: number;
+  getJobStatus: (id: string) => JobStatus;
+  onSetStatus: (id: string, status: JobStatus) => void;
+  onToggleSave: (id: string) => void;
+  onResetSearch: () => void;
 }
 
-export const JobFeed: React.FC<JobFeedProps> = ({ jobs }) => {
+export const JobFeed: React.FC<JobFeedProps> = ({
+  jobs,
+  activeTab,
+  selectedIndex,
+  getJobStatus,
+  onSetStatus,
+  onToggleSave,
+  onResetSearch,
+}) => {
   if (jobs.length === 0) {
-    return (
-      <div className="glass-panel rounded-2xl p-12 text-center my-8">
-        <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mx-auto mb-4 text-indigo-400">
-          <Inbox className="w-7 h-7" />
-        </div>
-        <h3 className="text-lg font-semibold text-white mb-1">No Jobs Discovered Yet</h3>
-        <p className="text-sm text-slate-400 max-w-md mx-auto">
-          The background crawler is running. New job listings will automatically slide into this stream in real-time.
-        </p>
-      </div>
-    );
+    if (activeTab === 'saved') return <EmptyState type="saved" />;
+    if (activeTab === 'applied') return <EmptyState type="applied" />;
+    if (activeTab === 'hidden') return <EmptyState type="hidden" />;
+    return <EmptyState type="search" onResetSearch={onResetSearch} />;
   }
 
   // Group jobs by date section (YYYY-MM-DD string)
@@ -44,6 +54,7 @@ export const JobFeed: React.FC<JobFeedProps> = ({ jobs }) => {
   };
 
   const sortedKeys = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+  let globalItemCounter = 0;
 
   return (
     <div className="space-y-8">
@@ -62,9 +73,22 @@ export const JobFeed: React.FC<JobFeedProps> = ({ jobs }) => {
 
             {/* Job Items List */}
             <div className="space-y-3">
-              {dateSectionJobs.map((job) => (
-                <JobCard key={job.id} job={job} />
-              ))}
+              {dateSectionJobs.map((job) => {
+                const currentIndex = globalItemCounter++;
+                const isSelected = currentIndex === selectedIndex;
+                const status = getJobStatus(job.id);
+
+                return (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    status={status}
+                    isSelected={isSelected}
+                    onSetStatus={(s) => onSetStatus(job.id, s)}
+                    onToggleSave={() => onToggleSave(job.id)}
+                  />
+                );
+              })}
             </div>
 
           </div>
