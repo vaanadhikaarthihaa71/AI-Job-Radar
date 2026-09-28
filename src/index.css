@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-hover {
+  transition: all 0.2s ease-in-out;
+}
+.glass-panel-hover:hover {
+  background: rgba(31, 41, 55, 0.85);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+/* Accent rule highlight for newly arrived realtime jobs */
+.new-job-highlight {
+  position: relative;
+  animation: accentFlash 3s ease-out forwards;
+}
+
+.new-job-highlight::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #6366f1 0%, #a855f7 100%);
+  border-radius: 4px 0 0 4px;
+  animation: fadeOutRule 3s ease-out forwards;
+}
+
+@keyframes fadeOutRule {
+  0% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
