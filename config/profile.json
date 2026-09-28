@@ -36,5 +36,6 @@
     "staff",
     "manager"
   ],
-  "min_score": 30
+  "min_score": 30,
+  "alert_threshold": 50
 }

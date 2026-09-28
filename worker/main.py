@@ -15,6 +15,7 @@ from crawler.sources import greenhouse, lever, ashby
 from crawler.score import score_dataframe, load_profile
 from crawler.db import get_active_watchlist, upsert_jobs
 from crawler.crawl import run_crawler
+from crawler.notifier import dispatch_job_alerts
 
 logging.basicConfig(
     level=logging.INFO,
@@ -114,6 +115,9 @@ async def run_ats_poller():
 
         newly_inserted, total_upserted = upsert_jobs(scored_df)
 
+        if newly_inserted:
+            dispatch_job_alerts(newly_inserted, profile)
+
         # Update cached ID set
         for j in new_jobs_to_process:
             if "id" in j:
@@ -157,6 +161,9 @@ async def run_jobspy_crawler():
             return
 
         newly_inserted, total_upserted = upsert_jobs(scored_df)
+
+        if newly_inserted:
+            dispatch_job_alerts(newly_inserted, profile_fast)
 
         # Update cache
         global _cached_job_ids
