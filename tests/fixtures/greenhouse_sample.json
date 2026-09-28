@@ -1,0 +1,14 @@
+{
+  "jobs": [
+    {
+      "id": 567890,
+      "title": "Software Engineer, Infrastructure",
+      "updated_at": "2026-09-25T14:30:00Z",
+      "absolute_url": "https://boards.greenhouse.io/stripe/jobs/567890",
+      "location": {
+        "name": "San Francisco, CA (Remote)"
+      },
+      "content": "<h1>Infrastructure Engineer</h1><p>We build global financial systems using Python and Go.</p>"
+    }
+  ]
+}

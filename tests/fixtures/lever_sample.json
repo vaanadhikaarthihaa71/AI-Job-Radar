@@ -1,0 +1,14 @@
+[
+  {
+    "id": "lever-12345",
+    "text": "Product Designer",
+    "createdAt": 1727000000000,
+    "hostedUrl": "https://jobs.lever.co/figma/lever-12345",
+    "categories": {
+      "location": "New York, NY",
+      "team": "Design",
+      "commitment": "Full-time"
+    },
+    "descriptionPlain": "Designing user interfaces for collaborative design tools."
+  }
+]
