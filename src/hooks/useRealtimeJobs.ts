@@ -7,6 +7,8 @@ export function useRealtimeJobs() {
   const [bufferedJobs, setBufferedJobs] = useState<Job[]>([]);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [nextScanInSeconds, setNextScanInSeconds] = useState<number>(90);
   const [stats, setStats] = useState<DashboardStats>({
     jobsLastHour: 0,
     medianDelayMinutes: null,
@@ -17,17 +19,23 @@ export function useRealtimeJobs() {
   const isPausedRef = useRef<boolean>(false);
   isPausedRef.current = isPaused;
 
+  // Next scan countdown timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNextScanInSeconds((prev) => (prev > 1 ? prev - 1 : 90));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Calculate live statistics
   const updateStats = useCallback((jobList: Job[]) => {
     const now = new Date().getTime();
     const oneHourAgo = now - 60 * 60 * 1000;
 
-    // Jobs found in last 1 hour
     const lastHourCount = jobList.filter(
       (j) => new Date(j.detected_at).getTime() >= oneHourAgo
     ).length;
 
-    // Median detection delay (detected_at - posted_at) in minutes
     const delaysInMinutes: number[] = [];
     jobList.forEach((j) => {
       if (j.posted_at) {
@@ -68,7 +76,12 @@ export function useRealtimeJobs() {
         .gt('detected_at', lastSeenDetectedAtRef.current)
         .order('detected_at', { ascending: false });
 
-      if (error) throw error;
+      console.log('[Supabase Backfill Response]:', { data, error });
+
+      if (error) {
+        console.error('[Supabase Backfill Error]:', error);
+        throw error;
+      }
 
       if (data && data.length > 0) {
         const newJobs: Job[] = data.map((j) => ({ ...j, isNew: true }));
@@ -85,12 +98,12 @@ export function useRealtimeJobs() {
         }
         lastSeenDetectedAtRef.current = data[0].detected_at;
       }
-    } catch (err) {
-      console.error('Backfill error:', err);
+    } catch (err: any) {
+      console.error('Backfill exception:', err);
     }
   }, [updateStats]);
 
-  // Initial fetch
+  // Initial fetch with Supabase anon key + fallback loader
   useEffect(() => {
     async function fetchInitialJobs() {
       try {
@@ -100,15 +113,22 @@ export function useRealtimeJobs() {
           .order('detected_at', { ascending: false })
           .limit(200);
 
-        if (error) throw error;
+        console.log('[Supabase Anon Key Select Response]:', { data, error });
 
-        if (data && data.length > 0) {
+        if (error) {
+          console.error('[Supabase Anon Key Select Error]:', error);
+          setErrorMessage(`Supabase Query Error: ${error.message}`);
+        } else if (data && data.length > 0) {
           setJobs(data);
+          setErrorMessage(null);
           lastSeenDetectedAtRef.current = data[0].detected_at;
           updateStats(data);
+        } else {
+          console.warn('[Supabase Anon Key]: 0 rows returned from jobs table.');
         }
-      } catch (err) {
-        console.error('Error loading initial jobs from Supabase:', err);
+      } catch (err: any) {
+        console.error('[Supabase Query Exception]:', err);
+        setErrorMessage(`Connection Failure: ${err.message || 'Unable to connect to database stream'}`);
       }
     }
 
@@ -123,6 +143,7 @@ export function useRealtimeJobs() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'jobs' },
         (payload) => {
+          console.log('[Supabase Realtime INSERT Received]:', payload);
           const newJob = { ...(payload.new as Job), isNew: true };
           lastSeenDetectedAtRef.current = newJob.detected_at;
 
@@ -137,9 +158,11 @@ export function useRealtimeJobs() {
           }
         }
       )
-      .subscribe((status) => {
+      .subscribe((status, err) => {
+        console.log('[Supabase Realtime Subscription Status]:', status, err);
         if (status === 'SUBSCRIBED') {
           setConnectionState('connected');
+          setErrorMessage(null);
         } else if (status === 'TIMED_OUT' || status === 'CLOSED') {
           setConnectionState('reconnecting');
           setTimeout(() => {
@@ -147,6 +170,9 @@ export function useRealtimeJobs() {
           }, 3000);
         } else if (status === 'CHANNEL_ERROR') {
           setConnectionState('disconnected');
+          if (err) {
+            setErrorMessage(`Realtime Error: ${err.message}`);
+          }
         }
       });
 
@@ -155,7 +181,6 @@ export function useRealtimeJobs() {
     };
   }, [updateStats, backfillMissedJobs]);
 
-  // Flush buffer queue when user clicks pill
   const flushBuffer = useCallback(() => {
     if (bufferedJobs.length === 0) return;
     setJobs((prev) => {
@@ -176,6 +201,8 @@ export function useRealtimeJobs() {
     bufferedJobsCount: bufferedJobs.length,
     isPaused,
     connectionState,
+    errorMessage,
+    nextScanInSeconds,
     stats,
     togglePause,
     flushBuffer,

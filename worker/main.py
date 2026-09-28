@@ -43,7 +43,6 @@ async def fetch_ats_company(company: dict, semaphore: asyncio.Semaphore) -> list
     async with semaphore:
         start_time = time.perf_counter()
         try:
-            # Delegate to sync adapter inside asyncio thread executor
             loop = asyncio.get_running_loop()
             if ats_type == "greenhouse":
                 jobs = await loop.run_in_executor(None, greenhouse.fetch, ats_slug)
@@ -94,7 +93,6 @@ async def run_ats_poller():
             logger.info("ATS Poller found 0 jobs across all watchlist companies.")
             return
 
-        # Cache check & skip unchanged job IDs
         global _cached_job_ids
         new_jobs_to_process = [j for j in all_raw_jobs if j.get("id") not in _cached_job_ids]
 
@@ -104,7 +102,6 @@ async def run_ats_poller():
 
         logger.info(f"ATS Poller identified {len(new_jobs_to_process)} new/updated job candidates.")
 
-        # Pipeline: Convert to DataFrame -> Score -> Upsert
         raw_df = pd.DataFrame(new_jobs_to_process)
         profile = load_profile()
         scored_df = score_dataframe(raw_df, profile)
@@ -118,7 +115,6 @@ async def run_ats_poller():
         if newly_inserted:
             dispatch_job_alerts(newly_inserted, profile)
 
-        # Update cached ID set
         for j in new_jobs_to_process:
             if "id" in j:
                 _cached_job_ids.add(j["id"])
@@ -144,7 +140,6 @@ async def run_jobspy_crawler():
 
     try:
         profile = load_profile()
-        # Override profile hours_old to 1 hour for fast periodic crawling
         profile_fast = dict(profile)
         profile_fast["hours_old"] = 1
 
@@ -165,7 +160,6 @@ async def run_jobspy_crawler():
         if newly_inserted:
             dispatch_job_alerts(newly_inserted, profile_fast)
 
-        # Update cache
         global _cached_job_ids
         for job_id in scored_df["id"]:
             _cached_job_ids.add(job_id)
@@ -180,8 +174,8 @@ async def run_jobspy_crawler():
         logger.error(f"Unhandled error in run_jobspy_crawler loop: {e}", exc_info=True)
 
 
-def main():
-    """Main worker initialization and APScheduler loop starter."""
+async def main():
+    """Main worker async loop starter."""
     logger.info("Initializing Job Radar Worker Engine...")
 
     scheduler = AsyncIOScheduler()
@@ -207,14 +201,17 @@ def main():
     )
 
     scheduler.start()
-    logger.info("APScheduler started! Poller active: ATS (90s), JobSpy (12m). Press Ctrl+C to stop.")
+    logger.info("APScheduler active! ATS Poller (90s), JobSpy Crawler (12m). Running initial cycle...")
 
-    try:
-        asyncio.get_event_loop().run_forever()
-    except (KeyboardInterrupt, SystemExit):
-        logger.info("Shutting down worker scheduler...")
-        scheduler.shutdown()
+    # Execute initial ATS poller run immediately on startup
+    await run_ats_poller()
+
+    while True:
+        await asyncio.sleep(3600)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        logger.info("Worker scheduler shut down cleanly.")

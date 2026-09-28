@@ -1,17 +1,22 @@
 import React from 'react';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Clock } from 'lucide-react';
 
 interface EmptyStateProps {
   type: 'search' | 'saved' | 'applied' | 'hidden' | 'watchlist';
+  nextScanInSeconds?: number;
   onResetSearch?: () => void;
 }
 
-export const EmptyState: React.FC<EmptyStateProps> = ({ type, onResetSearch }) => {
+export const EmptyState: React.FC<EmptyStateProps> = ({
+  type,
+  nextScanInSeconds = 90,
+  onResetSearch,
+}) => {
   const configs = {
     search: {
       code: 'ERR_EMPTY_SEARCH',
       title: 'No Job Postings Matched Your Query',
-      description: 'The search filters yielded zero results in the current ledger stream. Try clearing filters or altering search keywords.',
+      description: `The search filters yielded zero results in the current stream. Next automatic background scan runs in ${nextScanInSeconds}s (ATS poller runs every 90s, JobSpy runs every 12m).`,
       action: onResetSearch ? (
         <button
           onClick={onResetSearch}
@@ -52,8 +57,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ type, onResetSearch }) =
 
   return (
     <div className="py-16 px-6 border border-dashed border-line dark:border-line-dark text-center my-8 transition-colors duration-200">
-      <div className="text-[10px] font-mono text-signal font-bold uppercase tracking-widest mb-2">
-        [{config.code}]
+      <div className="text-[10px] font-mono text-signal font-bold uppercase tracking-widest mb-2 flex items-center justify-center gap-1.5">
+        <Clock className="w-3 h-3" />
+        <span>[{config.code}]</span>
       </div>
       <h3 className="text-lg font-serif font-bold text-ink dark:text-ink-dark mb-2">
         {config.title}

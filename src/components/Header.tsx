@@ -1,6 +1,6 @@
 import React from 'react';
 import { ConnectionState, DashboardStats } from '../types/job';
-import { Sun, Moon, Pause, Play } from 'lucide-react';
+import { Sun, Moon, Pause, Play, AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface HeaderProps {
   connectionState: ConnectionState;
@@ -9,6 +9,8 @@ interface HeaderProps {
   onTogglePause: () => void;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
+  errorMessage?: string | null;
+  nextScanInSeconds?: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -18,6 +20,8 @@ export const Header: React.FC<HeaderProps> = ({
   onTogglePause,
   theme,
   onToggleTheme,
+  errorMessage,
+  nextScanInSeconds = 90,
 }) => {
   return (
     <header className="border-b border-line dark:border-line-dark bg-paper dark:bg-paper-dark transition-colors duration-200">
@@ -46,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
               {connectionState === 'connected' ? 'LIVE STREAM ACTIVE' : connectionState.toUpperCase()}
             </span>
             <span className="text-line dark:text-line-dark">|</span>
-            <span>UPDATED 2 MIN AGO</span>
+            <span>NEXT SCAN IN: <strong className="text-signal font-bold">{nextScanInSeconds}s</strong></span>
           </div>
 
           {/* Compact Stat Strip */}
@@ -65,6 +69,23 @@ export const Header: React.FC<HeaderProps> = ({
 
         </div>
       </div>
+
+      {/* Connection / Fetch Error Banner */}
+      {errorMessage && (
+        <div className="bg-signal text-white px-4 lg:px-8 py-2 text-xs font-mono flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="flex items-center gap-1 font-bold underline hover:opacity-80"
+          >
+            <RefreshCw className="w-3 h-3" />
+            <span>RETRY NOW</span>
+          </button>
+        </div>
+      )}
 
       {/* Main Newspaper Masthead & Controls */}
       <div className="px-4 lg:px-8 py-6">
@@ -99,7 +120,7 @@ export const Header: React.FC<HeaderProps> = ({
               <span>{isPaused ? 'RESUME STREAM' : 'PAUSE UPDATES'}</span>
             </button>
 
-            {/* Disciplined Light / Dark Theme Toggle */}
+            {/* Light / Dark Theme Toggle */}
             <button
               onClick={onToggleTheme}
               className="p-2 border border-line dark:border-line-dark bg-paper-subtle dark:bg-paper-dark-subtle text-ink dark:text-ink-dark hover:border-ink dark:hover:border-ink-dark transition-all text-xs font-mono flex items-center gap-1.5"

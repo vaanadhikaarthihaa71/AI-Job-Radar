@@ -20,6 +20,8 @@ export function App() {
     bufferedJobsCount,
     isPaused,
     connectionState,
+    errorMessage,
+    nextScanInSeconds,
     stats,
     togglePause,
     flushBuffer,
@@ -202,6 +204,8 @@ export function App() {
         onTogglePause={togglePause}
         theme={theme}
         onToggleTheme={toggleTheme}
+        errorMessage={errorMessage}
+        nextScanInSeconds={nextScanInSeconds}
       />
 
       {/* Main Newspaper Container */}
