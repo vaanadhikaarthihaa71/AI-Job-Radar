@@ -10,5 +10,31 @@
   "country": "USA",
   "results_wanted": 10,
   "hours_old": 72,
-  "is_remote": false
+  "is_remote": false,
+  "skills": [
+    "python",
+    "react",
+    "typescript",
+    "postgres",
+    "sql",
+    "api",
+    "aws",
+    "docker"
+  ],
+  "preferred_cities": [
+    "San Francisco",
+    "New York",
+    "Seattle",
+    "Remote"
+  ],
+  "excluded_keywords": [
+    "senior",
+    "lead",
+    "principal",
+    "10+ years",
+    "phd",
+    "staff",
+    "manager"
+  ],
+  "min_score": 30
 }
