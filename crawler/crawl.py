@@ -33,10 +33,23 @@ def load_config(config_path: Path) -> dict:
         return json.load(f)
 
 
-def generate_job_id(job_url: str) -> str:
-    """Generates a deterministic SHA-256 hash string from the job URL."""
-    url = job_url.strip() if job_url else ""
-    return hashlib.sha256(url.encode("utf-8")).hexdigest()
+def generate_job_id(source: str, job_url: str, external_id: str | None = None) -> str:
+    """Generates deterministic SHA-256 hash string from source + external_id/url."""
+    raw_key = f"{source.strip().lower()}_{external_id or job_url.strip()}"
+    return hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
+
+
+def detect_seniority(title: str, description: str) -> str:
+    """Detects job seniority level based on keywords in title and description."""
+    text = f"{title} {description}".lower()
+    if any(k in text for k in ["intern", "graduate", "junior", "entry level", "entry-level", "fresher", "associate"]):
+        return "Entry Level"
+    elif any(k in text for k in ["senior", "sr.", "sr ", "lead", "principal", "staff"]):
+        return "Senior"
+    elif any(k in text for k in ["director", "head of", "vp", "executive", "chief"]):
+        return "Executive"
+    else:
+        return "Mid Level"
 
 
 def scrape_site(site: str, search_term: str, location: str, config: dict) -> pd.DataFrame:
@@ -65,17 +78,19 @@ def scrape_site(site: str, search_term: str, location: str, config: dict) -> pd.
 
 
 def normalize_jobs(df: pd.DataFrame) -> pd.DataFrame:
-    """Normalizes raw crawler DataFrame into required target schema."""
+    """Normalizes raw crawler DataFrame into Supabase jobs schema format."""
+    target_columns = [
+        "id", "title", "company", "location", "is_remote",
+        "posted_at", "detected_at", "job_url", "source", "description", "seniority"
+    ]
+
     if df.empty:
-        return pd.DataFrame(columns=[
-            "id", "title", "company", "location", "is_remote",
-            "date_posted", "job_url", "site", "description", "first_seen_at"
-        ])
+        return pd.DataFrame(columns=target_columns)
 
     now_iso = datetime.now(timezone.utc).isoformat()
 
     # Ensure required raw fields exist
-    for col in ["title", "company", "location", "is_remote", "date_posted", "job_url", "site", "description"]:
+    for col in ["title", "company", "location", "is_remote", "date_posted", "job_url", "site", "description", "id"]:
         if col not in df.columns:
             df[col] = None
 
@@ -83,24 +98,35 @@ def normalize_jobs(df: pd.DataFrame) -> pd.DataFrame:
 
     # Populate target schema fields
     normalized["job_url"] = df["job_url"].astype(str).fillna("")
-    normalized["id"] = normalized["job_url"].apply(generate_job_id)
+    normalized["source"] = df["site"].fillna("unknown").astype(str)
+
+    # Generate deterministic hash id: source + external_id/url
+    ids = []
+    for idx, row in df.iterrows():
+        src = str(row.get("site") or "unknown")
+        url = str(row.get("job_url") or "")
+        ext_id = str(row.get("id")) if pd.notna(row.get("id")) else None
+        ids.append(generate_job_id(src, url, ext_id))
+
+    normalized["id"] = ids
     normalized["title"] = df["title"].fillna("").astype(str)
     normalized["company"] = df["company"].fillna("").astype(str)
     normalized["location"] = df["location"].fillna("").astype(str)
     normalized["is_remote"] = df["is_remote"].fillna(False).astype(bool)
-    normalized["date_posted"] = df["date_posted"].astype(str).fillna("")
-    normalized["site"] = df["site"].fillna("").astype(str)
+    normalized["posted_at"] = df["date_posted"].astype(str).fillna("")
+    normalized["detected_at"] = now_iso
     normalized["description"] = df["description"].fillna("").astype(str)
-    normalized["first_seen_at"] = now_iso
+
+    # Compute seniority
+    seniorities = [
+        detect_seniority(str(t), str(d))
+        for t, d in zip(normalized["title"], normalized["description"])
+    ]
+    normalized["seniority"] = seniorities
 
     # Filter out empty job URLs
     normalized = normalized[normalized["job_url"] != ""]
 
-    # Reorder columns
-    target_columns = [
-        "id", "title", "company", "location", "is_remote",
-        "date_posted", "job_url", "site", "description", "first_seen_at"
-    ]
     return normalized[target_columns]
 
 
@@ -119,13 +145,14 @@ def run_crawler() -> pd.DataFrame:
                 if not site_jobs.empty:
                     all_raw_dfs.append(site_jobs)
 
+    target_columns = [
+        "id", "title", "company", "location", "is_remote",
+        "posted_at", "detected_at", "job_url", "source", "description", "seniority"
+    ]
+
     if not all_raw_dfs:
         logger.warning("Crawler finished with no jobs collected.")
-        empty_df = pd.DataFrame(columns=[
-            "id", "title", "company", "location", "is_remote",
-            "date_posted", "job_url", "site", "description", "first_seen_at"
-        ])
-        return empty_df
+        return pd.DataFrame(columns=target_columns)
 
     combined_df = pd.concat(all_raw_dfs, ignore_index=True)
     normalized_df = normalize_jobs(combined_df)
@@ -140,7 +167,7 @@ def run_crawler() -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    logger.info("Starting Job Radar Crawler (Step 1)...")
+    logger.info("Starting Job Radar Crawler...")
     jobs_df = run_crawler()
 
     print("\n" + "=" * 80)
@@ -149,11 +176,11 @@ if __name__ == "__main__":
 
     if not jobs_df.empty:
         print(f"\nTotal Unique Jobs Scraped: {len(jobs_df)}")
-        print("\nJob Count Per Site:")
-        print(jobs_df["site"].value_counts().to_string())
+        print("\nJob Count Per Source:")
+        print(jobs_df["source"].value_counts().to_string())
 
         print("\nFirst 5 Scraped Rows:")
-        preview_cols = ["id", "title", "company", "location", "site", "date_posted"]
+        preview_cols = ["id", "title", "company", "location", "source", "seniority"]
         print(jobs_df[preview_cols].head(5).to_string(index=False))
     else:
         print("No job data collected.")
