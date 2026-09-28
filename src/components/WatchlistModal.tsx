@@ -1,5 +1,5 @@
 import React from 'react';
-import { Building2, X, CheckCircle2, Globe, ExternalLink } from 'lucide-react';
+import { Building2, X, CheckCircle2 } from 'lucide-react';
 import { Job } from '../types/job';
 
 interface WatchlistModalProps {
@@ -27,7 +27,6 @@ const DEFAULT_WATCHLIST: WatchlistCompany[] = [
 export const WatchlistModal: React.FC<WatchlistModalProps> = ({ isOpen, onClose, jobs }) => {
   if (!isOpen) return null;
 
-  // Compute job count per company
   const companyJobCounts = jobs.reduce((acc, job) => {
     const cName = job.company.toLowerCase();
     acc[cName] = (acc[cName] || 0) + 1;
@@ -35,60 +34,50 @@ export const WatchlistModal: React.FC<WatchlistModalProps> = ({ isOpen, onClose,
   }, {} as Record<string, number>);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-slide-down">
-      <div className="glass-panel w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-50 bg-ink/70 dark:bg-black/80 flex items-center justify-center p-4 animate-ledger-enter">
+      <div className="w-full max-w-2xl bg-paper dark:bg-paper-dark border-2 border-ink dark:border-ink-dark shadow-2xl overflow-hidden flex flex-col max-h-[85vh] font-mono">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-line dark:border-line-dark">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-              <Building2 className="w-4 h-4" />
-            </div>
+            <Building2 className="w-5 h-5 text-signal" />
             <div>
-              <h2 className="text-base font-bold text-white">Company ATS Watchlist</h2>
-              <p className="text-xs text-slate-400">Tracked ATS boards polled continuously every 90 seconds</p>
+              <h2 className="text-base font-serif font-bold text-ink dark:text-ink-dark">Company Watchlist Directory</h2>
+              <p className="text-xs text-ink-muted dark:text-ink-dark-muted">Tracked ATS boards polled every 90 seconds</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1 text-ink-muted dark:text-ink-dark-muted hover:text-ink dark:hover:text-ink-dark"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Watchlist Table / Grid */}
+        {/* Watchlist Table */}
         <div className="p-6 overflow-y-auto space-y-3">
           {DEFAULT_WATCHLIST.map((comp) => {
             const count = companyJobCounts[comp.name.toLowerCase()] || 0;
             return (
               <div
                 key={comp.ats_slug}
-                className="flex items-center justify-between p-4 rounded-xl bg-slate-900/80 border border-slate-800/80 hover:border-slate-700 transition-all"
+                className="flex items-center justify-between p-4 border border-line dark:border-line-dark bg-paper-subtle dark:bg-paper-dark-subtle hover:border-ink dark:hover:border-ink-dark transition-colors"
               >
-                <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center font-bold text-indigo-300 border border-slate-700">
-                    {comp.name.charAt(0)}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-bold text-ink dark:text-ink-dark">{comp.name}</h4>
+                    <span className="text-[10px] text-signal font-bold uppercase border border-signal px-1.5 py-0.5">
+                      ACTIVE
+                    </span>
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-semibold text-white">{comp.name}</h4>
-                      <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium">
-                        <CheckCircle2 className="w-2.5 h-2.5" />
-                        Active
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
-                      <span className="capitalize font-medium text-indigo-300">{comp.ats_type}</span>
-                      <span>•</span>
-                      <span className="font-mono text-[11px] text-slate-500">slug: {comp.ats_slug}</span>
-                    </div>
+                  <div className="text-xs text-ink-muted dark:text-ink-dark-muted">
+                    ATS: <span className="uppercase text-ink dark:text-ink-dark font-semibold">{comp.ats_type}</span> • SLUG: {comp.ats_slug}
                   </div>
                 </div>
 
                 <div className="text-right">
-                  <span className="text-sm font-bold text-white block">{count}</span>
-                  <span className="text-[11px] text-slate-500">live jobs discovered</span>
+                  <span className="text-base font-bold text-signal block">{count}</span>
+                  <span className="text-[10px] text-ink-muted dark:text-ink-dark-muted uppercase">RECORDED JOBS</span>
                 </div>
               </div>
             );
@@ -96,13 +85,13 @@ export const WatchlistModal: React.FC<WatchlistModalProps> = ({ isOpen, onClose,
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3.5 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-          <span>Polling 6 high-growth tech companies</span>
+        <div className="px-6 py-3.5 bg-paper-subtle dark:bg-paper-dark-subtle border-t border-line dark:border-line-dark flex items-center justify-between text-xs">
+          <span className="text-ink-muted dark:text-ink-dark-muted uppercase">6 ACTIVE DIRECTORIES MONITORED</span>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition-colors"
+            className="px-4 py-1.5 bg-ink dark:bg-ink-dark text-paper dark:text-paper-dark font-semibold uppercase text-xs hover:opacity-90 transition-opacity"
           >
-            Close Watchlist
+            Close Directory
           </button>
         </div>
 

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, Globe, RotateCcw, ChevronDown, ChevronUp, Star, CheckCircle, EyeOff, Building2, Bookmark } from 'lucide-react';
-import { JobStatus } from '../hooks/useJobStatus';
+import { Search, Filter, RotateCcw, ChevronDown, ChevronUp, Star, CheckCircle, EyeOff, Building2, Bookmark } from 'lucide-react';
 
 export type MainTab = 'all' | 'saved' | 'applied' | 'hidden';
 
@@ -49,137 +48,128 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
-    <div className="glass-panel rounded-2xl p-4 mb-6 shadow-xl space-y-4">
+    <div className="border-b-2 border-ink dark:border-ink-dark pb-4 mb-6 space-y-4 transition-colors duration-200">
       
-      {/* Top Main Row: Status Tabs & Cmd+K Shortcut */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-3 border-b border-slate-800/80 pb-3.5">
+      {/* Top Status Tabs Bar */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 border-b border-line dark:border-line-dark pb-3">
         
-        {/* Navigation Tabs */}
-        <div className="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800 w-full md:w-auto overflow-x-auto">
+        {/* Status Navigation Tabs */}
+        <div className="flex items-center gap-1 font-mono text-xs overflow-x-auto">
           <button
             onClick={() => onTabChange('all')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 border font-semibold uppercase transition-all ${
               activeTab === 'all'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-ink dark:bg-ink-dark text-paper dark:text-paper-dark border-ink dark:border-ink-dark'
+                : 'border-line dark:border-line-dark text-ink-muted dark:text-ink-dark-muted hover:border-ink dark:hover:border-ink-dark'
             }`}
           >
-            <span>All Stream</span>
-            <span className="text-[10px] opacity-75 font-mono">({statusCounts.all})</span>
+            ALL STREAM ({statusCounts.all})
           </button>
 
           <button
             onClick={() => onTabChange('saved')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 border font-semibold uppercase transition-all flex items-center gap-1 ${
               activeTab === 'saved'
-                ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-signal text-white border-signal'
+                : 'border-line dark:border-line-dark text-ink-muted dark:text-ink-dark-muted hover:border-ink dark:hover:border-ink-dark'
             }`}
           >
-            <Star className="w-3.5 h-3.5 text-amber-400" />
-            <span>Saved</span>
-            <span className="text-[10px] opacity-75 font-mono">({statusCounts.saved})</span>
+            <Star className="w-3 h-3 fill-current" />
+            <span>SAVED ({statusCounts.saved})</span>
           </button>
 
           <button
             onClick={() => onTabChange('applied')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 border font-semibold uppercase transition-all flex items-center gap-1 ${
               activeTab === 'applied'
-                ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-ink dark:bg-ink-dark text-paper dark:text-paper-dark border-ink dark:border-ink-dark'
+                : 'border-line dark:border-line-dark text-ink-muted dark:text-ink-dark-muted hover:border-ink dark:hover:border-ink-dark'
             }`}
           >
-            <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Applied</span>
-            <span className="text-[10px] opacity-75 font-mono">({statusCounts.applied})</span>
+            <CheckCircle className="w-3 h-3" />
+            <span>APPLIED ({statusCounts.applied})</span>
           </button>
 
           <button
             onClick={() => onTabChange('hidden')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 border font-semibold uppercase transition-all flex items-center gap-1 ${
               activeTab === 'hidden'
-                ? 'bg-rose-500/20 border border-rose-500/40 text-rose-300'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-ink dark:bg-ink-dark text-paper dark:text-paper-dark border-ink dark:border-ink-dark'
+                : 'border-line dark:border-line-dark text-ink-muted dark:text-ink-dark-muted hover:border-ink dark:hover:border-ink-dark'
             }`}
           >
-            <EyeOff className="w-3.5 h-3.5 text-rose-400" />
-            <span>Hidden</span>
-            <span className="text-[10px] opacity-75 font-mono">({statusCounts.hidden})</span>
+            <EyeOff className="w-3 h-3" />
+            <span>HIDDEN ({statusCounts.hidden})</span>
           </button>
         </div>
 
-        {/* Watchlist & Saved Searches Modal Triggers */}
-        <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+        {/* Modal Triggers */}
+        <div className="flex items-center gap-2 font-mono text-xs justify-end">
           <button
             onClick={onOpenWatchlist}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 text-slate-300 text-xs font-medium transition-all"
+            className="px-3 py-1.5 border border-line dark:border-line-dark bg-paper-subtle dark:bg-paper-dark-subtle text-ink dark:text-ink-dark hover:border-ink dark:hover:border-ink-dark uppercase text-[11px] font-semibold flex items-center gap-1.5"
           >
-            <Building2 className="w-3.5 h-3.5 text-purple-400" />
-            <span>Watchlist</span>
+            <Building2 className="w-3.5 h-3.5 text-signal" />
+            <span>WATCHLIST</span>
           </button>
 
           <button
             onClick={onOpenSavedSearches}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 text-slate-300 text-xs font-medium transition-all"
+            className="px-3 py-1.5 border border-line dark:border-line-dark bg-paper-subtle dark:bg-paper-dark-subtle text-ink dark:text-ink-dark hover:border-ink dark:hover:border-ink-dark uppercase text-[11px] font-semibold flex items-center gap-1.5"
           >
-            <Bookmark className="w-3.5 h-3.5 text-amber-400" />
-            <span>Saved Searches</span>
+            <Bookmark className="w-3.5 h-3.5 text-signal" />
+            <span>SAVED SEARCHES</span>
           </button>
         </div>
 
       </div>
 
-      {/* Primary Search Row & Progressive Disclosure Toggle */}
+      {/* Primary Search Input Row */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-3">
         
-        {/* Main Search Input */}
-        <div className="relative w-full md:w-full">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+        {/* Search Bar */}
+        <div className="relative w-full">
+          <Search className="w-4 h-4 text-ink-muted dark:text-ink-dark-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search jobs, skills, or companies..."
-            className="w-full bg-slate-900/90 border border-slate-800 rounded-xl pl-10 pr-24 py-2.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+            placeholder="Search ledger by job title, company, location, or skill..."
+            className="w-full bg-paper-subtle dark:bg-paper-dark-subtle border border-line dark:border-line-dark rounded-none pl-10 pr-20 py-2 text-xs font-mono text-ink dark:text-ink-dark placeholder:text-ink-muted dark:placeholder:text-ink-dark-muted focus:outline-none focus:border-ink dark:focus:border-ink-dark transition-colors"
           />
-          {/* Cmd+K Trigger Badge */}
           <button
             onClick={onOpenCommandPalette}
-            className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-[10px] font-mono text-slate-400 hover:text-slate-200 transition-colors"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 border border-line dark:border-line-dark bg-paper dark:bg-paper-dark font-mono text-[10px] text-ink-muted dark:text-ink-dark-muted hover:text-ink dark:hover:text-ink-dark"
           >
-            <span>⌘K</span>
+            ⌘K
           </button>
         </div>
 
-        {/* Advanced Filters Toggle Button */}
+        {/* Collapsible Advanced Filters Toggle */}
         <button
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 text-slate-300 text-xs font-medium shrink-0 transition-all"
+          className="flex items-center gap-1.5 px-3.5 py-2 border border-line dark:border-line-dark bg-paper-subtle dark:bg-paper-dark-subtle text-ink dark:text-ink-dark text-xs font-mono font-semibold uppercase shrink-0 transition-colors hover:border-ink dark:hover:border-ink-dark"
         >
-          <Filter className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Advanced Filters</span>
-          {showAdvanced ? (
-            <ChevronUp className="w-3.5 h-3.5 text-slate-500" />
-          ) : (
-            <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
-          )}
+          <Filter className="w-3.5 h-3.5 text-signal" />
+          <span>ADVANCED FILTERS</span>
+          {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
         </button>
 
       </div>
 
-      {/* Progressive Disclosure Collapsible Advanced Filters Panel */}
+      {/* Progressive Disclosure Advanced Filters Panel */}
       {showAdvanced && (
-        <div className="pt-3 border-t border-slate-800/80 grid grid-cols-1 md:grid-cols-4 gap-4 animate-slide-down">
+        <div className="pt-3 border-t border-line dark:border-line-dark grid grid-cols-1 md:grid-cols-4 gap-4 font-mono text-xs animate-ledger-enter">
           
-          {/* Source Filter */}
+          {/* Source Dropdown */}
           <div className="space-y-1">
-            <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block">
-              Job Source
+            <label className="text-[10px] uppercase font-bold text-ink-muted dark:text-ink-dark-muted block">
+              Source Portal
             </label>
             <select
               value={selectedSource}
               onChange={(e) => onSourceChange(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 capitalize"
+              className="w-full bg-paper-subtle dark:bg-paper-dark-subtle border border-line dark:border-line-dark px-3 py-1.5 text-xs text-ink dark:text-ink-dark focus:outline-none focus:border-ink dark:focus:border-ink-dark capitalize"
             >
               <option value="all">All Sources</option>
               <option value="linkedin">LinkedIn</option>
@@ -193,9 +183,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
           {/* Min Score Slider */}
           <div className="space-y-1">
-            <div className="flex items-center justify-between text-[11px] font-medium text-slate-400 uppercase tracking-wider">
-              <span>Min Relevance Score</span>
-              <span className="font-mono text-indigo-400 font-bold">{minScore}</span>
+            <div className="flex items-center justify-between text-[10px] uppercase font-bold text-ink-muted dark:text-ink-dark-muted">
+              <span>Min Score</span>
+              <span className="text-signal font-bold">{minScore}</span>
             </div>
             <input
               type="range"
@@ -204,25 +194,24 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               step="10"
               value={minScore}
               onChange={(e) => onMinScoreChange(Number(e.target.value))}
-              className="w-full accent-indigo-500 cursor-pointer pt-2"
+              className="w-full accent-signal cursor-pointer pt-1"
             />
           </div>
 
-          {/* Remote Only Toggle */}
+          {/* Remote Toggle */}
           <div className="space-y-1">
-            <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block">
+            <label className="text-[10px] uppercase font-bold text-ink-muted dark:text-ink-dark-muted block">
               Location Filter
             </label>
             <button
               onClick={() => onRemoteOnlyChange(!remoteOnly)}
-              className={`w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium transition-all ${
+              className={`w-full py-1.5 border font-semibold uppercase text-xs transition-all ${
                 remoteOnly
-                  ? 'bg-purple-500/20 border-purple-500/40 text-purple-200'
-                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                  ? 'bg-signal text-white border-signal'
+                  : 'bg-paper-subtle dark:bg-paper-dark-subtle border-line dark:border-line-dark text-ink dark:text-ink-dark hover:border-ink dark:hover:border-ink-dark'
               }`}
             >
-              <Globe className="w-3.5 h-3.5" />
-              <span>{remoteOnly ? 'Remote Jobs Only' : 'All Locations'}</span>
+              {remoteOnly ? 'REMOTE ONLY' : 'ALL LOCATIONS'}
             </button>
           </div>
 
@@ -230,25 +219,25 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           <div className="space-y-1 flex flex-col justify-end">
             <button
               onClick={onReset}
-              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-100 text-xs font-medium transition-colors"
+              className="w-full py-1.5 border border-line dark:border-line-dark bg-paper-subtle dark:bg-paper-dark-subtle text-ink-muted dark:text-ink-dark-muted hover:text-ink dark:hover:text-ink-dark uppercase font-semibold text-xs transition-colors flex items-center justify-center gap-1"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset All Filters</span>
+              <RotateCcw className="w-3 h-3" />
+              <span>RESET FILTERS</span>
             </button>
           </div>
 
         </div>
       )}
 
-      {/* Footer Info & Keyboard Tips */}
-      <div className="flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 px-1 border-t border-slate-800/60 pt-2.5 gap-2">
+      {/* Footer Meta & Keyboard Shortcuts Strip */}
+      <div className="flex flex-col sm:flex-row items-center justify-between font-mono text-[11px] text-ink-muted dark:text-ink-dark-muted pt-1 gap-2">
         <div>
-          Showing <strong className="text-slate-300 font-mono">{totalFilteredCount}</strong> matching job postings
+          DISPLAYING <strong className="text-ink dark:text-ink-dark">{totalFilteredCount}</strong> RECORDED POSITIONS
         </div>
-        <div className="flex items-center gap-3 text-[10px]">
-          <span><kbd className="font-mono bg-slate-800 px-1 rounded text-slate-400">J/K</kbd> navigate</span>
-          <span><kbd className="font-mono bg-slate-800 px-1 rounded text-slate-400">O</kbd> open link</span>
-          <span><kbd className="font-mono bg-slate-800 px-1 rounded text-slate-400">S</kbd> save job</span>
+        <div className="flex items-center gap-3 text-[10px] uppercase">
+          <span><kbd className="border border-line dark:border-line-dark px-1 bg-paper-subtle dark:bg-paper-dark-subtle">J/K</kbd> MOVE</span>
+          <span><kbd className="border border-line dark:border-line-dark px-1 bg-paper-subtle dark:bg-paper-dark-subtle">O</kbd> OPEN</span>
+          <span><kbd className="border border-line dark:border-line-dark px-1 bg-paper-subtle dark:bg-paper-dark-subtle">S</kbd> SAVE</span>
         </div>
       </div>
 

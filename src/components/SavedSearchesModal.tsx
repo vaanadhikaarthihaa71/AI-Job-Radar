@@ -49,32 +49,30 @@ export const SavedSearchesModal: React.FC<SavedSearchesModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-slide-down">
-      <div className="glass-panel w-full max-w-xl rounded-2xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-50 bg-ink/70 dark:bg-black/80 flex items-center justify-center p-4 animate-ledger-enter">
+      <div className="w-full max-w-xl bg-paper dark:bg-paper-dark border-2 border-ink dark:border-ink-dark shadow-2xl overflow-hidden flex flex-col max-h-[85vh] font-mono">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-line dark:border-line-dark">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-              <Bookmark className="w-4 h-4" />
-            </div>
+            <Bookmark className="w-5 h-5 text-signal" />
             <div>
-              <h2 className="text-base font-bold text-white">Saved Searches & Alerts</h2>
-              <p className="text-xs text-slate-400">Save your filter criteria and enable browser notifications</p>
+              <h2 className="text-base font-serif font-bold text-ink dark:text-ink-dark">Saved Filter Presets</h2>
+              <p className="text-xs text-ink-muted dark:text-ink-dark-muted">Save search parameters and browser notification alerts</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1 text-ink-muted dark:text-ink-dark-muted hover:text-ink dark:hover:text-ink-dark"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Save Current Search Form */}
-        <form onSubmit={handleSaveCurrent} className="p-6 border-b border-slate-800 bg-slate-900/60 space-y-3">
-          <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-            Save Current Filter Configuration
+        <form onSubmit={handleSaveCurrent} className="p-6 border-b border-line dark:border-line-dark bg-paper-subtle dark:bg-paper-dark-subtle space-y-3">
+          <h3 className="text-xs font-bold text-ink dark:text-ink-dark uppercase">
+            Save Current Active Filter Parameters
           </h3>
           
           <div className="flex items-center gap-2">
@@ -82,28 +80,28 @@ export const SavedSearchesModal: React.FC<SavedSearchesModalProps> = ({
               type="text"
               value={searchName}
               onChange={(e) => setSearchName(e.target.value)}
-              placeholder="Give this search a name (e.g. Remote Python Developer)"
-              className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
+              placeholder="Preset Name (e.g., Remote Python Engineers)"
+              className="flex-1 bg-paper dark:bg-paper-dark border border-line dark:border-line-dark px-3 py-2 text-xs text-ink dark:text-ink-dark placeholder:text-ink-muted dark:placeholder:text-ink-dark-muted focus:outline-none focus:border-ink dark:focus:border-ink-dark"
             />
             <button
               type="submit"
               disabled={!searchName.trim()}
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold transition-all flex items-center gap-1.5"
+              className="px-4 py-2 bg-ink dark:bg-ink-dark text-paper dark:text-paper-dark font-bold text-xs uppercase hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-1"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Save</span>
+              <span>SAVE</span>
             </button>
           </div>
 
-          <div className="flex items-center justify-between text-xs text-slate-400">
+          <div className="flex items-center justify-between text-xs text-ink-muted dark:text-ink-dark-muted">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={notify}
                 onChange={(e) => setNotify(e.target.checked)}
-                className="rounded border-slate-800 bg-slate-900 text-indigo-600 focus:ring-indigo-500"
+                className="accent-signal cursor-pointer"
               />
-              <span>Send browser notification when new matching job arrives</span>
+              <span>Trigger browser notifications on new matching jobs</span>
             </label>
           </div>
         </form>
@@ -111,28 +109,28 @@ export const SavedSearchesModal: React.FC<SavedSearchesModalProps> = ({
         {/* Saved Searches List */}
         <div className="p-6 overflow-y-auto space-y-3 flex-1">
           {savedSearches.length === 0 ? (
-            <div className="text-center py-8 text-xs text-slate-500">
-              No saved searches saved yet.
+            <div className="text-center py-8 text-xs text-ink-muted dark:text-ink-dark-muted">
+              No saved filter presets yet.
             </div>
           ) : (
             savedSearches.map((search) => (
               <div
                 key={search.id}
-                className="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-all"
+                className="flex items-center justify-between p-3.5 border border-line dark:border-line-dark bg-paper-subtle dark:bg-paper-dark-subtle hover:border-ink dark:hover:border-ink-dark transition-colors"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-white">{search.name}</span>
+                    <span className="text-xs font-bold text-ink dark:text-ink-dark">{search.name}</span>
                     {search.notify ? (
-                      <Bell className="w-3 h-3 text-amber-400" />
+                      <Bell className="w-3.5 h-3.5 text-signal" />
                     ) : (
-                      <BellOff className="w-3 h-3 text-slate-600" />
+                      <BellOff className="w-3.5 h-3.5 text-ink-muted dark:text-ink-dark-muted" />
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                  <div className="flex items-center gap-2 text-[11px] text-ink-muted dark:text-ink-dark-muted">
                     {search.query && <span>&quot;{search.query}&quot;</span>}
-                    {search.remoteOnly && <span className="text-purple-300">Remote</span>}
-                    {search.minScore > 0 && <span className="font-mono">Score &gt;= {search.minScore}</span>}
+                    {search.remoteOnly && <span className="text-signal">REMOTE</span>}
+                    {search.minScore > 0 && <span>SCORE &gt;= {search.minScore}</span>}
                   </div>
                 </div>
 
@@ -142,14 +140,14 @@ export const SavedSearchesModal: React.FC<SavedSearchesModalProps> = ({
                       onApplySearch(search);
                       onClose();
                     }}
-                    className="p-1.5 rounded-lg bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white transition-all text-xs flex items-center gap-1 font-medium px-2.5"
+                    className="px-3 py-1 bg-ink dark:bg-ink-dark text-paper dark:text-paper-dark font-bold text-xs uppercase hover:opacity-90 transition-opacity flex items-center gap-1"
                   >
                     <Play className="w-3 h-3 fill-current" />
-                    <span>Apply</span>
+                    <span>APPLY</span>
                   </button>
                   <button
                     onClick={() => onDeleteSearch(search.id)}
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                    className="p-1 text-ink-muted dark:text-ink-dark-muted hover:text-signal transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

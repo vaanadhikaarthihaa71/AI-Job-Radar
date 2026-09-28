@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRealtimeJobs } from './hooks/useRealtimeJobs';
 import { useJobStatus } from './hooks/useJobStatus';
 import { useKeyboardNav } from './hooks/useKeyboardNav';
+import { useTheme } from './hooks/useTheme';
 import { Header } from './components/Header';
 import { FilterBar, MainTab } from './components/FilterBar';
 import { NewJobsPill } from './components/NewJobsPill';
@@ -9,9 +10,11 @@ import { JobFeed } from './components/JobFeed';
 import { CommandPalette, CommandAction } from './components/CommandPalette';
 import { WatchlistModal } from './components/WatchlistModal';
 import { SavedSearchesModal } from './components/SavedSearchesModal';
-import { Globe, Star, CheckCircle, EyeOff, Building2, Search, RotateCcw } from 'lucide-react';
+import { Globe, Star, CheckCircle, RotateCcw, Search, Building2 } from 'lucide-react';
 
 export function App() {
+  const { theme, toggleTheme } = useTheme();
+
   const {
     jobs,
     bufferedJobsCount,
@@ -23,7 +26,6 @@ export function App() {
   } = useRealtimeJobs();
 
   const {
-    jobStatuses,
     savedSearches,
     setJobStatus,
     toggleSaveJob,
@@ -55,7 +57,7 @@ export function App() {
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, []);
 
-  // Filtered jobs based on tab, status, and search filters
+  // Filtered jobs computation
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
       const status = getJobStatus(job.id);
@@ -140,49 +142,49 @@ export function App() {
         id: 'remote',
         title: 'Filter: Remote Jobs Only',
         category: 'Filter',
-        icon: <Globe className="w-4 h-4 text-purple-400" />,
+        icon: <Globe className="w-4 h-4 text-signal" />,
         handler: () => setRemoteOnly(true),
       },
       {
         id: 'high_score',
         title: 'Filter: High Relevancy (>80 Score)',
         category: 'Filter',
-        icon: <Star className="w-4 h-4 text-emerald-400" />,
+        icon: <Star className="w-4 h-4 text-signal" />,
         handler: () => setMinScore(80),
       },
       {
         id: 'greenhouse',
         title: 'Filter: Greenhouse ATS Jobs',
         category: 'Filter',
-        icon: <Search className="w-4 h-4 text-indigo-400" />,
+        icon: <Search className="w-4 h-4 text-ink dark:text-ink-dark" />,
         handler: () => setSelectedSource('greenhouse'),
       },
       {
         id: 'tab_saved',
         title: 'View: Saved Jobs',
         category: 'Navigation',
-        icon: <Star className="w-4 h-4 text-amber-400" />,
+        icon: <Star className="w-4 h-4 text-signal" />,
         handler: () => setActiveTab('saved'),
       },
       {
         id: 'tab_applied',
         title: 'View: Applied Jobs',
         category: 'Navigation',
-        icon: <CheckCircle className="w-4 h-4 text-emerald-400" />,
+        icon: <CheckCircle className="w-4 h-4 text-ink dark:text-ink-dark" />,
         handler: () => setActiveTab('applied'),
       },
       {
         id: 'watchlist',
         title: 'View: Company Watchlist',
         category: 'Navigation',
-        icon: <Building2 className="w-4 h-4 text-purple-400" />,
+        icon: <Building2 className="w-4 h-4 text-signal" />,
         handler: () => setIsWatchlistOpen(true),
       },
       {
         id: 'reset',
         title: 'Action: Reset All Filters',
         category: 'Action',
-        icon: <RotateCcw className="w-4 h-4 text-slate-400" />,
+        icon: <RotateCcw className="w-4 h-4 text-ink-muted dark:text-ink-dark-muted" />,
         handler: handleResetFilters,
       },
     ],
@@ -190,20 +192,22 @@ export function App() {
   );
 
   return (
-    <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col selection:bg-indigo-500 selection:text-white pb-16">
+    <div className="min-h-screen bg-paper dark:bg-paper-dark text-ink dark:text-ink-dark flex flex-col selection:bg-signal selection:text-white pb-16 transition-colors duration-200">
       
-      {/* Live Header */}
+      {/* Morning Briefing Header */}
       <Header
         connectionState={connectionState}
         stats={stats}
         isPaused={isPaused}
         onTogglePause={togglePause}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
-      {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 lg:px-8 flex-1 w-full">
+      {/* Main Newspaper Container */}
+      <main className="max-w-7xl mx-auto px-4 lg:px-8 flex-1 w-full pt-6">
         
-        {/* Filter Controls Bar with Progressive Disclosure & Status Tabs */}
+        {/* Newspaper Filter Strip */}
         <FilterBar
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -223,12 +227,12 @@ export function App() {
           statusCounts={statusCounts}
         />
 
-        {/* Floating New Jobs Pill (When Paused) */}
+        {/* Floating Signal Refresh Pill */}
         {isPaused && (
           <NewJobsPill count={bufferedJobsCount} onFlush={flushBuffer} />
         )}
 
-        {/* Live Job Feed */}
+        {/* Editorial Job Ledger Feed */}
         <JobFeed
           jobs={filteredJobs}
           activeTab={activeTab}
@@ -274,9 +278,9 @@ export function App() {
         currentMinScore={minScore}
       />
 
-      {/* Footer */}
-      <footer className="mt-auto border-t border-slate-800/80 py-6 text-center text-xs text-slate-500">
-        <p>Job Radar Live Dashboard &copy; 2026. Real-time Job Scraping & Intelligence Platform.</p>
+      {/* Editorial Footer */}
+      <footer className="mt-auto border-t border-line dark:border-line-dark py-6 text-center text-xs font-mono text-ink-muted dark:text-ink-dark-muted">
+        <p>JOB RADAR INTELLIGENCE BRIEFING &copy; 2026. ALL RIGHTS RESERVED.</p>
       </footer>
     </div>
   );

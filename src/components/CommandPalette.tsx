@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Search, Globe, Star, CheckCircle, EyeOff, Building2, Filter, X, Zap } from 'lucide-react';
+import { Search, Globe, Star, CheckCircle, RotateCcw, X, Building2 } from 'lucide-react';
 
 export interface CommandAction {
   id: string;
@@ -19,7 +19,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Close on Escape & handle global Cmd+K / Ctrl+K hotkey
   useEffect(() => {
     setQuery('');
     setSelectedIndex(0);
@@ -59,25 +58,25 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-start justify-center pt-20 px-4 animate-slide-down">
+    <div className="fixed inset-0 z-50 bg-ink/70 dark:bg-black/80 flex items-start justify-center pt-20 px-4 animate-ledger-enter">
       <div
-        className="glass-panel w-full max-w-xl rounded-2xl shadow-2xl border border-slate-700/80 overflow-hidden flex flex-col"
+        className="w-full max-w-xl bg-paper dark:bg-paper-dark border-2 border-ink dark:border-ink-dark shadow-2xl overflow-hidden flex flex-col font-mono"
         onKeyDown={handleKeyDown}
       >
         {/* Search Header */}
-        <div className="flex items-center px-4 py-3.5 border-b border-slate-800">
-          <Search className="w-5 h-5 text-indigo-400 mr-3" />
+        <div className="flex items-center px-4 py-3 border-b border-line dark:border-line-dark">
+          <Search className="w-4 h-4 text-signal mr-3" />
           <input
             autoFocus
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Type a command or search filters (Cmd+K)..."
-            className="w-full bg-transparent text-slate-100 placeholder:text-slate-500 text-sm focus:outline-none"
+            placeholder="Type a command or filter term (Cmd+K)..."
+            className="w-full bg-transparent text-ink dark:text-ink-dark placeholder:text-ink-muted dark:placeholder:text-ink-dark-muted text-xs focus:outline-none"
           />
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors ml-2"
+            className="p-1 text-ink-muted dark:text-ink-dark-muted hover:text-ink dark:hover:text-ink-dark ml-2"
           >
             <X className="w-4 h-4" />
           </button>
@@ -86,8 +85,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         {/* Actions List */}
         <div className="max-h-80 overflow-y-auto p-2 space-y-1">
           {filteredActions.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-500">
-              No command matching &quot;{query}&quot;
+            <div className="py-8 text-center text-xs text-ink-muted dark:text-ink-dark-muted">
+              No command matches &quot;{query}&quot;
             </div>
           ) : (
             filteredActions.map((action, idx) => {
@@ -100,25 +99,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                     onClose();
                   }}
                   onMouseEnter={() => setSelectedIndex(idx)}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                  className={`w-full flex items-center justify-between px-3.5 py-2 text-xs font-semibold uppercase transition-all ${
                     isSelected
-                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
-                      : 'text-slate-300 hover:bg-slate-800/60'
+                      ? 'bg-ink dark:bg-ink-dark text-paper dark:text-paper-dark'
+                      : 'text-ink dark:text-ink-dark hover:bg-paper-subtle dark:hover:bg-paper-dark-subtle'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className={isSelected ? 'text-white' : 'text-slate-400'}>
-                      {action.icon}
-                    </span>
+                  <div className="flex items-center gap-2.5">
+                    <span>{action.icon}</span>
                     <span>{action.title}</span>
                   </div>
-                  <span
-                    className={`text-[10px] px-2 py-0.5 rounded-md ${
-                      isSelected
-                        ? 'bg-indigo-700 text-indigo-100'
-                        : 'bg-slate-800 text-slate-400'
-                    }`}
-                  >
+                  <span className="text-[10px] opacity-75 border border-current px-1.5 py-0.5">
                     {action.category}
                   </span>
                 </button>
@@ -128,16 +119,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         </div>
 
         {/* Footer Hotkey Tips */}
-        <div className="px-4 py-2 bg-slate-900/90 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
+        <div className="px-4 py-2 bg-paper-subtle dark:bg-paper-dark-subtle border-t border-line dark:border-line-dark flex items-center justify-between text-[10px] text-ink-muted dark:text-ink-dark-muted uppercase">
           <div className="flex items-center gap-3">
-            <span><kbd className="font-mono bg-slate-800 px-1.5 py-0.5 rounded text-slate-300">↑↓</kbd> navigate</span>
-            <span><kbd className="font-mono bg-slate-800 px-1.5 py-0.5 rounded text-slate-300">↵</kbd> select</span>
-            <span><kbd className="font-mono bg-slate-800 px-1.5 py-0.5 rounded text-slate-300">esc</kbd> close</span>
+            <span><kbd className="border border-line dark:border-line-dark px-1">↑↓</kbd> NAVIGATE</span>
+            <span><kbd className="border border-line dark:border-line-dark px-1">↵</kbd> SELECT</span>
+            <span><kbd className="border border-line dark:border-line-dark px-1">ESC</kbd> CLOSE</span>
           </div>
-          <div className="flex items-center gap-1 font-mono text-indigo-400">
-            <Zap className="w-3 h-3" />
-            <span>Job Radar Commands</span>
-          </div>
+          <div className="text-signal font-bold">COMMAND DIRECTORY</div>
         </div>
       </div>
     </div>

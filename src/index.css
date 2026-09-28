@@ -4,50 +4,75 @@
 
 @layer base {
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Instrument Sans', -apple-system, sans-serif;
+    background-color: #F4F1EA;
+    color: #1C1B18;
   }
+  
+  .dark body {
+    background-color: #121110;
+    color: #E6E4DD;
+  }
+}
+
+.font-serif {
+  font-family: 'Fraunces', Georgia, serif;
 }
 
 .font-mono {
   font-family: 'JetBrains Mono', monospace;
 }
 
-/* Glassmorphism utility */
-.glass-panel {
-  background: rgba(17, 24, 39, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* Hairline rule borders */
+.border-line-light {
+  border-color: #D8D3C8;
 }
 
-.glass-panel-hover {
-  transition: all 0.2s ease-in-out;
-}
-.glass-panel-hover:hover {
-  background: rgba(31, 41, 55, 0.85);
-  border-color: rgba(99, 102, 241, 0.3);
+.dark .border-line-dark {
+  border-color: #2A2926;
 }
 
-/* Accent rule highlight for newly arrived realtime jobs */
-.new-job-highlight {
+/* Newspaper ledger row hover effect */
+.ledger-row {
+  transition: background-color 150ms ease-in-out, border-color 150ms ease-in-out;
+}
+
+.ledger-row:hover {
+  background-color: #EBE7DF;
+}
+
+.dark .ledger-row:hover {
+  background-color: #1A1917;
+}
+
+/* Animated accent rule for newly arrived entries */
+.new-ledger-row {
   position: relative;
-  animation: accentFlash 3s ease-out forwards;
 }
 
-.new-job-highlight::before {
+.new-ledger-row::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 0;
+  left: -4px;
   bottom: 0;
-  width: 4px;
-  background: linear-gradient(180deg, #6366f1 0%, #a855f7 100%);
-  border-radius: 4px 0 0 4px;
-  animation: fadeOutRule 3s ease-out forwards;
+  width: 3px;
+  background-color: #E04724;
+  animation: fadeOutSignal 2.5s ease-out forwards;
 }
 
-@keyframes fadeOutRule {
+@keyframes fadeOutSignal {
   0% { opacity: 1; }
-  70% { opacity: 1; }
+  75% { opacity: 1; }
   100% { opacity: 0; }
+}
+
+/* Accessibility: Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
