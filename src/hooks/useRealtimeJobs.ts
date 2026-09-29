@@ -86,24 +86,30 @@ export function useRealtimeJobs() {
 
   // Local API Fallback fetch
   const fetchLocalJobsFallback = useCallback(async () => {
-    try {
-      const res = await fetch('/api/jobs');
-      if (res.ok) {
-        const data: Job[] = await res.json();
-        if (data && data.length > 0) {
-          const sorted = [...data].sort((a, b) => getEffectiveTimestamp(b) - getEffectiveTimestamp(a));
-          setJobs(sorted);
-          setErrorMessage(null);
-          setConnectionState('polling');
-          if (sorted[0]?.detected_at) {
-            lastSeenDetectedAtRef.current = sorted[0].detected_at;
+    const endpoints = ['/api/jobs', '/jobs.json', '/data/jobs.json'];
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) {
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const data: Job[] = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+              const sorted = [...data].sort((a, b) => getEffectiveTimestamp(b) - getEffectiveTimestamp(a));
+              setJobs(sorted);
+              setErrorMessage(null);
+              setConnectionState('polling');
+              if (sorted[0]?.detected_at) {
+                lastSeenDetectedAtRef.current = sorted[0].detected_at;
+              }
+              updateStats(sorted);
+              return true;
+            }
           }
-          updateStats(sorted);
-          return true;
         }
+      } catch (err: any) {
+        console.warn(`[Local API Fallback Warning for ${url}]:`, err);
       }
-    } catch (err: any) {
-      console.warn('[Local API Fallback Warning]:', err);
     }
     return false;
   }, [updateStats]);

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:all": "concurrently -n \"WORKER,WEB\" -c \"cyan,green\" \"python worker/main.py\" \"vite\"",
-    "build": "tsc && vite build",
+    "build": "node -e \"const fs = require('fs'); fs.mkdirSync('public/data', { recursive: true }); fs.copyFileSync('data/jobs.json', 'public/jobs.json'); fs.copyFileSync('data/jobs.json', 'public/data/jobs.json');\" && tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
