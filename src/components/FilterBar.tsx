@@ -8,8 +8,12 @@ interface FilterBarProps {
   onSearchChange: (q: string) => void;
   selectedSource: string;
   onSourceChange: (s: string) => void;
+  selectedIndustry: string;
+  onIndustryChange: (ind: string) => void;
   remoteOnly: boolean;
   onRemoteOnlyChange: (r: boolean) => void;
+  indiaOnly: boolean;
+  onIndiaOnlyChange: (ind: boolean) => void;
   minScore: number;
   onMinScoreChange: (score: number) => void;
   activeTab: MainTab;
@@ -17,6 +21,8 @@ interface FilterBarProps {
   onOpenWatchlist: () => void;
   onOpenSavedSearches: () => void;
   onOpenCommandPalette: () => void;
+  onOpenOnboarding: () => void;
+  onOpenChat: () => void;
   onReset: () => void;
   totalFilteredCount: number;
   statusCounts: {
@@ -32,8 +38,12 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   onSearchChange,
   selectedSource,
   onSourceChange,
+  selectedIndustry,
+  onIndustryChange,
   remoteOnly,
   onRemoteOnlyChange,
+  indiaOnly,
+  onIndiaOnlyChange,
   minScore,
   onMinScoreChange,
   activeTab,
@@ -41,6 +51,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   onOpenWatchlist,
   onOpenSavedSearches,
   onOpenCommandPalette,
+  onOpenOnboarding,
+  onOpenChat,
   onReset,
   totalFilteredCount,
   statusCounts,
@@ -104,7 +116,34 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         </div>
 
         {/* Modal Triggers */}
-        <div className="flex items-center gap-2 font-mono text-xs justify-end">
+        <div className="flex items-center gap-2 font-mono text-xs justify-end flex-wrap">
+          <button
+            onClick={() => onIndiaOnlyChange(!indiaOnly)}
+            className={`px-3 py-1.5 border uppercase text-[11px] font-bold flex items-center gap-1.5 transition-all ${
+              indiaOnly
+                ? 'bg-emerald-600 text-white border-emerald-600 shadow-md'
+                : 'border-emerald-600/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white'
+            }`}
+          >
+            <span>🇮🇳 {indiaOnly ? 'INDIA JOBS ACTIVE' : 'FILTER INDIA JOBS'}</span>
+          </button>
+
+          <button
+            onClick={onOpenChat}
+            className="px-3.5 py-1.5 border border-signal bg-signal text-white uppercase text-[11px] font-bold flex items-center gap-1.5 hover:bg-signal/90 shadow-md shadow-signal/20 transition-all"
+          >
+            <Star className="w-3.5 h-3.5 fill-current" />
+            <span>AI CHAT ASSISTANT</span>
+          </button>
+
+          <button
+            onClick={onOpenOnboarding}
+            className="px-3 py-1.5 border border-signal/40 bg-signal/10 text-signal hover:bg-signal hover:text-white uppercase text-[11px] font-bold flex items-center gap-1.5 transition-all"
+          >
+            <Star className="w-3.5 h-3.5" />
+            <span>CHANGE TARGET INDUSTRY</span>
+          </button>
+
           <button
             onClick={onOpenWatchlist}
             className="px-3 py-1.5 border border-line dark:border-line-dark bg-paper-subtle dark:bg-paper-dark-subtle text-ink dark:text-ink-dark hover:border-ink dark:hover:border-ink-dark uppercase text-[11px] font-semibold flex items-center gap-1.5"
@@ -159,8 +198,29 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
       {/* Progressive Disclosure Advanced Filters Panel */}
       {showAdvanced && (
-        <div className="pt-3 border-t border-line dark:border-line-dark grid grid-cols-1 md:grid-cols-4 gap-4 font-mono text-xs animate-ledger-enter">
+        <div className="pt-3 border-t border-line dark:border-line-dark grid grid-cols-1 md:grid-cols-5 gap-4 font-mono text-xs animate-ledger-enter">
           
+          {/* Industry Filter */}
+          <div className="space-y-1">
+            <label className="text-[10px] uppercase font-bold text-ink-muted dark:text-ink-dark-muted block">
+              Industry Domain
+            </label>
+            <select
+              value={selectedIndustry}
+              onChange={(e) => onIndustryChange(e.target.value)}
+              className="w-full bg-paper-subtle dark:bg-paper-dark-subtle border border-line dark:border-line-dark px-3 py-1.5 text-xs text-ink dark:text-ink-dark focus:outline-none focus:border-ink dark:focus:border-ink-dark"
+            >
+              <option value="all">All Industries</option>
+              <option value="tech">Tech & Software</option>
+              <option value="healthcare">Healthcare & Nursing</option>
+              <option value="finance">Business & Finance</option>
+              <option value="marketing">Marketing & Sales</option>
+              <option value="design">Creative & Design</option>
+              <option value="trades">Skilled Trades & Ops</option>
+              <option value="education">Education & Training</option>
+            </select>
+          </div>
+
           {/* Source Dropdown */}
           <div className="space-y-1">
             <label className="text-[10px] uppercase font-bold text-ink-muted dark:text-ink-dark-muted block">
@@ -172,12 +232,14 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               className="w-full bg-paper-subtle dark:bg-paper-dark-subtle border border-line dark:border-line-dark px-3 py-1.5 text-xs text-ink dark:text-ink-dark focus:outline-none focus:border-ink dark:focus:border-ink-dark capitalize"
             >
               <option value="all">All Sources</option>
-              <option value="linkedin">LinkedIn</option>
               <option value="indeed">Indeed</option>
-              <option value="glassdoor">Glassdoor</option>
+              <option value="linkedin">LinkedIn</option>
+              <option value="ashby">Ashby</option>
               <option value="greenhouse">Greenhouse</option>
               <option value="lever">Lever</option>
-              <option value="ashby">Ashby</option>
+              <option value="mayo_jobs">Mayo Clinic Jobs</option>
+              <option value="trane_jobs">Trane Jobs</option>
+              <option value="jpmorgan">JPMorgan Jobs</option>
             </select>
           </div>
 

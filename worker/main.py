@@ -174,11 +174,48 @@ async def run_jobspy_crawler():
         logger.error(f"Unhandled error in run_jobspy_crawler loop: {e}", exc_info=True)
 
 
+async def run_real_jobs_poller():
+    """
+    Real Jobs Poller Task (Runs every 2 minutes):
+    1. Fetch real jobs from Remotive, Arbeitnow, and Greenhouse board endpoints.
+    2. Score, filter, and upsert jobs.
+    3. Dispatch alert notifications ONLY for NEWLY inserted rows.
+    """
+    logger.info("--- Starting Real Jobs Poller Execution (Every 2m) ---")
+    start_all = time.perf_counter()
+    try:
+        loop = asyncio.get_running_loop()
+        from load_real_jobs import run_load_real_jobs
+        newly_inserted, total_upserted = await loop.run_in_executor(None, run_load_real_jobs)
+
+        if newly_inserted:
+            profile = load_profile()
+            dispatch_job_alerts(newly_inserted, profile)
+
+        elapsed_total = time.perf_counter() - start_all
+        logger.info(
+            f"--- [REAL JOBS POLLER COMPLETED] Upserted={total_upserted} | "
+            f"NEWLY Inserted={len(newly_inserted)} | Latency={elapsed_total:.2f}s ---"
+        )
+    except Exception as e:
+        logger.error(f"Unhandled error in run_real_jobs_poller loop: {e}", exc_info=True)
+
+
 async def main():
     """Main worker async loop starter."""
     logger.info("Initializing Job Radar Worker Engine...")
 
     scheduler = AsyncIOScheduler()
+
+    # Schedule Real Jobs Poller job every 2 minutes (120 seconds)
+    scheduler.add_job(
+        run_real_jobs_poller,
+        "interval",
+        seconds=120,
+        id="real_jobs_poller_job",
+        max_instances=1,
+        coalesce=True
+    )
 
     # Schedule ATS Poller job every 90 seconds
     scheduler.add_job(
@@ -201,9 +238,10 @@ async def main():
     )
 
     scheduler.start()
-    logger.info("APScheduler active! ATS Poller (90s), JobSpy Crawler (12m). Running initial cycle...")
+    logger.info("APScheduler active! Real Jobs Poller (2m), ATS Poller (90s), JobSpy Crawler (12m). Running initial cycle...")
 
-    # Execute initial ATS poller run immediately on startup
+    # Execute initial poller runs immediately on startup
+    await run_real_jobs_poller()
     await run_ats_poller()
 
     while True:

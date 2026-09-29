@@ -1,70 +1,112 @@
 import React from 'react';
-import { RotateCcw, Clock } from 'lucide-react';
+import { RotateCcw, AlertTriangle, Database, Search, Bookmark, CheckCircle, EyeOff, Building2 } from 'lucide-react';
 
 interface EmptyStateProps {
   type: 'search' | 'saved' | 'applied' | 'hidden' | 'watchlist';
   nextScanInSeconds?: number;
   onResetSearch?: () => void;
+  errorMessage?: string | null;
+  totalDbJobsCount?: number;
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
   type,
-  nextScanInSeconds = 90,
   onResetSearch,
+  errorMessage,
+  totalDbJobsCount,
 }) => {
+  if (errorMessage) {
+    return (
+      <div className="py-16 px-6 border border-line dark:border-line-dark rounded-sm text-center my-8 bg-paper-subtle/50 dark:bg-paper-dark-subtle/50 font-sans">
+        <div className="w-10 h-10 rounded-full bg-signal/10 text-signal mx-auto flex items-center justify-center mb-3">
+          <AlertTriangle className="w-5 h-5" />
+        </div>
+        <h3 className="text-lg font-serif font-bold text-ink dark:text-ink-dark mb-1">
+          Connection issue
+        </h3>
+        <p className="text-xs text-ink-muted dark:text-ink-dark-muted max-w-md mx-auto mb-6">
+          {errorMessage}
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-signal text-white text-xs font-semibold rounded-sm hover:bg-signal/90 transition-all"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          <span>Retry Connection</span>
+        </button>
+      </div>
+    );
+  }
+
+  if (totalDbJobsCount === 0 && type === 'search') {
+    return (
+      <div className="py-16 px-6 border border-line dark:border-line-dark rounded-sm text-center my-8 bg-paper-subtle/50 dark:bg-paper-dark-subtle/50 font-sans">
+        <div className="w-10 h-10 rounded-full bg-amber-500/10 text-amber-600 mx-auto flex items-center justify-center mb-3">
+          <Database className="w-5 h-5" />
+        </div>
+        <h3 className="text-lg font-serif font-bold text-ink dark:text-ink-dark mb-1">
+          No opportunities currently monitored
+        </h3>
+        <p className="text-xs text-ink-muted dark:text-ink-dark-muted max-w-md mx-auto mb-4">
+          The database currently has zero recorded positions. Run <code className="font-mono bg-paper dark:bg-paper-dark px-1.5 py-0.5 border border-line dark:border-line-dark">python load_real_jobs.py</code> to populate jobs.
+        </p>
+      </div>
+    );
+  }
+
   const configs = {
     search: {
-      code: 'ERR_EMPTY_SEARCH',
-      title: 'No Job Postings Matched Your Query',
-      description: `The search filters yielded zero results in the current stream. Next automatic background scan runs in ${nextScanInSeconds}s (ATS poller runs every 90s, JobSpy runs every 12m).`,
+      icon: Search,
+      title: 'No matching opportunities',
+      description: 'Try broadening your filters or clearing search keywords to discover more roles.',
       action: onResetSearch ? (
         <button
           onClick={onResetSearch}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-ink dark:bg-ink-dark text-paper dark:text-paper-dark text-xs font-mono font-semibold uppercase tracking-wider transition-opacity hover:opacity-90"
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-ink dark:bg-ink-dark text-paper dark:text-paper-dark text-xs font-semibold rounded-sm hover:bg-signal dark:hover:bg-signal transition-all"
         >
           <RotateCcw className="w-3.5 h-3.5" />
-          <span>Reset All Filters</span>
+          <span>Reset Filters</span>
         </button>
       ) : null,
     },
     saved: {
-      code: 'ERR_NO_SAVED_ITEMS',
-      title: 'No Saved Bookmarks in Ledger',
-      description: 'You have not saved any job postings yet. Press "S" on any listing or click SAVE to bookmark jobs for later review.',
+      icon: Bookmark,
+      title: 'No saved jobs',
+      description: "Save opportunities you're interested in and they'll appear here.",
       action: null,
     },
     applied: {
-      code: 'ERR_NO_APPLICATIONS',
-      title: 'No Applied Records Tracked',
-      description: 'No applications have been logged. Click APPLY on any ledger listing after submitting your application.',
+      icon: CheckCircle,
+      title: 'No applications',
+      description: 'Once you apply to an opportunity, track it here.',
       action: null,
     },
     hidden: {
-      code: 'ERR_NO_HIDDEN_ITEMS',
-      title: 'No Hidden Listings',
-      description: 'You have not hidden any jobs. Hiding unwanted postings removes them from your live stream view.',
+      icon: EyeOff,
+      title: 'No hidden jobs',
+      description: 'Jobs you hide will be safely stored here.',
       action: null,
     },
     watchlist: {
-      code: 'ERR_WATCHLIST_EMPTY',
-      title: 'Watchlist Directory Empty',
-      description: 'No company boards are configured in the active tracking list.',
+      icon: Building2,
+      title: 'No watchlisted companies',
+      description: 'Add company domains to track their direct career board postings.',
       action: null,
     },
   };
 
   const config = configs[type];
+  const Icon = config.icon;
 
   return (
-    <div className="py-16 px-6 border border-dashed border-line dark:border-line-dark text-center my-8 transition-colors duration-200">
-      <div className="text-[10px] font-mono text-signal font-bold uppercase tracking-widest mb-2 flex items-center justify-center gap-1.5">
-        <Clock className="w-3 h-3" />
-        <span>[{config.code}]</span>
+    <div className="py-16 px-6 border border-line dark:border-line-dark rounded-sm text-center my-8 bg-paper-subtle/40 dark:bg-paper-dark-subtle/40 font-sans">
+      <div className="w-10 h-10 rounded-full bg-paper-subtle dark:bg-paper-dark-subtle text-ink-muted dark:text-ink-dark-muted mx-auto flex items-center justify-center mb-3 border border-line dark:border-line-dark">
+        <Icon className="w-5 h-5" />
       </div>
-      <h3 className="text-lg font-serif font-bold text-ink dark:text-ink-dark mb-2">
+      <h3 className="text-lg font-serif font-bold text-ink dark:text-ink-dark mb-1">
         {config.title}
       </h3>
-      <p className="text-xs font-mono text-ink-muted dark:text-ink-dark-muted max-w-md mx-auto mb-6 leading-relaxed">
+      <p className="text-xs text-ink-muted dark:text-ink-dark-muted max-w-sm mx-auto mb-6">
         {config.description}
       </p>
       {config.action}

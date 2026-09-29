@@ -4,48 +4,53 @@
 
 @layer base {
   body {
-    font-family: 'Instrument Sans', -apple-system, sans-serif;
-    background-color: #F4F1EA;
-    color: #1C1B18;
+    font-family: 'Inter', -apple-system, sans-serif;
+    background-color: #F8F6F0;
+    color: #18181B;
+    overflow-x: hidden;
   }
   
   .dark body {
-    background-color: #121110;
-    color: #E6E4DD;
+    background-color: #121614;
+    color: #F4F4F5;
   }
 }
 
 .font-serif {
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'DM Serif Display', Georgia, serif;
+}
+
+.font-sans {
+  font-family: 'Inter', -apple-system, sans-serif;
 }
 
 .font-mono {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
 }
 
 /* Hairline rule borders */
 .border-line-light {
-  border-color: #D8D3C8;
+  border-color: #E4E4E7;
 }
 
 .dark .border-line-dark {
-  border-color: #2A2926;
+  border-color: #272F2B;
 }
 
-/* Newspaper ledger row hover effect */
+/* Horizontal job row hover effect */
 .ledger-row {
   transition: background-color 150ms ease-in-out, border-color 150ms ease-in-out;
 }
 
 .ledger-row:hover {
-  background-color: #EBE7DF;
+  background-color: #FFFFFF;
 }
 
 .dark .ledger-row:hover {
-  background-color: #1A1917;
+  background-color: #1A201D;
 }
 
-/* Animated accent rule for newly arrived entries */
+/* Animated accent rule for newly arrived entries - Emerald Forest Accent */
 .new-ledger-row {
   position: relative;
 }
@@ -57,7 +62,7 @@
   left: -4px;
   bottom: 0;
   width: 3px;
-  background-color: #E04724;
+  background-color: #0F382C;
   animation: fadeOutSignal 2.5s ease-out forwards;
 }
 
@@ -65,6 +70,40 @@
   0% { opacity: 1; }
   75% { opacity: 1; }
   100% { opacity: 0; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 180ms ease-out forwards;
+}
+
+/* Custom minimal scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #E4E4E7;
+  border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #272F2B;
 }
 
 /* Accessibility: Respect prefers-reduced-motion */

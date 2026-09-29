@@ -3,10 +3,16 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    'Supabase VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY environment variables are missing. ' +
-    'The app will operate in read-only offline fallback mode.'
+export const isSupabaseConfigured = Boolean(
+  supabaseUrl &&
+  supabaseAnonKey &&
+  !supabaseUrl.includes('your-project-id') &&
+  !supabaseUrl.includes('placeholder')
+);
+
+if (!isSupabaseConfigured) {
+  console.log(
+    '[Job Radar]: Operating in local API fallback mode (Supabase URL unconfigured or placeholder).'
   );
 }
 

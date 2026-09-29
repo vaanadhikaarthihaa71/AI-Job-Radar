@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../context/AuthContext';
 
-export type JobStatus = 'active' | 'saved' | 'applied' | 'hidden';
+export type JobStatus = 'active' | 'saved' | 'applied' | 'screening' | 'interview' | 'offer' | 'rejected' | 'hidden';
 
 export interface SavedSearch {
   id: string;
@@ -13,47 +14,56 @@ export interface SavedSearch {
   createdAt: string;
 }
 
-const JOB_STATUSES_KEY = 'job_radar_statuses_v1';
-const SAVED_SEARCHES_KEY = 'job_radar_saved_searches_v1';
+const getStorageKey = (sub?: string) => (sub ? `job_radar_statuses_${sub}` : 'job_radar_statuses_public');
+const getSearchesKey = (sub?: string) => (sub ? `job_radar_searches_${sub}` : 'job_radar_searches_public');
 
 export function useJobStatus() {
-  const [jobStatuses, setJobStatuses] = useState<Record<string, JobStatus>>(() => {
-    try {
-      const stored = localStorage.getItem(JOB_STATUSES_KEY);
-      return stored ? JSON.parse(stored) : {};
-    } catch (e) {
-      console.error('Error loading job statuses from localStorage:', e);
-      return {};
-    }
-  });
+  const { user } = useAuth();
+  const userId = user?.id;
 
-  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>(() => {
-    try {
-      const stored = localStorage.getItem(SAVED_SEARCHES_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch (e) {
-      console.error('Error loading saved searches from localStorage:', e);
-      return [];
-    }
-  });
+  const [jobStatuses, setJobStatuses] = useState<Record<string, JobStatus>>({});
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
 
-  // Sync statuses to localStorage
+  // Load user-specific job statuses & saved searches whenever userId changes
   useEffect(() => {
+    const key = getStorageKey(userId);
     try {
-      localStorage.setItem(JOB_STATUSES_KEY, JSON.stringify(jobStatuses));
+      const stored = localStorage.getItem(key);
+      setJobStatuses(stored ? JSON.parse(stored) : {});
+    } catch (e) {
+      console.error('Error reading user job statuses from localStorage:', e);
+      setJobStatuses({});
+    }
+
+    const searchKey = getSearchesKey(userId);
+    try {
+      const storedSearches = localStorage.getItem(searchKey);
+      setSavedSearches(storedSearches ? JSON.parse(storedSearches) : []);
+    } catch (e) {
+      console.error('Error reading user saved searches from localStorage:', e);
+      setSavedSearches([]);
+    }
+  }, [userId]);
+
+  // Sync statuses to user-specific localStorage key
+  useEffect(() => {
+    const key = getStorageKey(userId);
+    try {
+      localStorage.setItem(key, JSON.stringify(jobStatuses));
     } catch (e) {
       console.error('Error writing job statuses to localStorage:', e);
     }
-  }, [jobStatuses]);
+  }, [jobStatuses, userId]);
 
-  // Sync saved searches to localStorage
+  // Sync saved searches to user-specific localStorage key
   useEffect(() => {
+    const searchKey = getSearchesKey(userId);
     try {
-      localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(savedSearches));
+      localStorage.setItem(searchKey, JSON.stringify(savedSearches));
     } catch (e) {
       console.error('Error writing saved searches to localStorage:', e);
     }
-  }, [savedSearches]);
+  }, [savedSearches, userId]);
 
   const setJobStatus = useCallback((jobId: string, status: JobStatus) => {
     setJobStatuses((prev) => {
@@ -88,7 +98,6 @@ export function useJobStatus() {
     };
     setSavedSearches((prev) => [newSearch, ...prev]);
 
-    // Request notification permission if user enabled notifications
     if (search.notify && 'Notification' in window && Notification.permission !== 'granted') {
       Notification.requestPermission();
     }

@@ -12,13 +12,27 @@ export interface Job {
   score: number;
   matched_skills: string[];
   seniority?: string;
+  industry?: string;
+  salary?: string;
   isNew?: boolean; // UI flag for accent rule animation
 }
 
-export type ConnectionState = 'connected' | 'reconnecting' | 'disconnected';
+export interface UserProfile {
+  name: string;
+  email: string;
+  skills: string[];
+  industries: string[];
+  experienceLevel: string;
+  remoteOnly: boolean;
+  minScore: number;
+  isAuthenticated: boolean;
+}
+
+export type ConnectionState = 'connected' | 'reconnecting' | 'disconnected' | 'polling';
 
 export interface DashboardStats {
   jobsLastHour: number;
   medianDelayMinutes: number | null;
   totalActiveJobs: number;
 }
+

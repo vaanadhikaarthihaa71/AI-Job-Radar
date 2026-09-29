@@ -8,30 +8,41 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        serif: ['Fraunces', 'Georgia', 'serif'],
-        sans: ['Instrument Sans', '-apple-system', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        serif: ['DM Serif Display', 'Georgia', 'serif'],
+        sans: ['Inter', '-apple-system', 'sans-serif'],
+        mono: ['IBM Plex Mono', 'monospace'],
       },
       colors: {
         paper: {
-          DEFAULT: '#F4F1EA',
-          subtle: '#EBE7DF',
-          dark: '#121110',
-          'dark-subtle': '#1A1917',
+          DEFAULT: '#F8F6F0', // Warm sand off-white
+          surface: '#FFFFFF', // Clean surface white
+          dark: '#121614',
+          'dark-surface': '#1A201D',
         },
         ink: {
-          DEFAULT: '#1C1B18',
-          muted: '#66635B',
-          dark: '#E6E4DD',
-          'dark-muted': '#8A877D',
+          DEFAULT: '#18181B', // Deep charcoal text
+          muted: '#52525B', // Muted slate gray
+          dark: '#F4F4F5',
+          'dark-muted': '#A1A1AA',
         },
         line: {
-          DEFAULT: '#D8D3C8',
-          dark: '#2A2926',
+          DEFAULT: '#E4E4E7', // Crisp border
+          dark: '#272F2B',
+        },
+        forest: {
+          DEFAULT: '#0F382C', // Deep Forest Green accent
+          hover: '#155E46',   // Forest Emerald hover
+          subtle: '#E6EFEA',  // Soft Sage tint
         },
         signal: {
-          DEFAULT: '#E04724', // Vermilion signal orange
-          subtle: 'rgba(224, 71, 36, 0.1)',
+          DEFAULT: '#0F382C', // Primary Emerald Forest accent
+          hover: '#155E46',
+          subtle: '#E6EFEA',
+        },
+        state: {
+          success: '#15803D',
+          warning: '#B45309',
+          error: '#B91C1C',
         },
       },
       animation: {

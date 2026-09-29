@@ -110,3 +110,26 @@ INSERT INTO public.companies_watchlist (name, ats_type, ats_slug, active) VALUES
 ('Postman', 'ashby', 'postman', true),
 ('Supabase', 'ashby', 'supabase', true)
 ON CONFLICT (ats_slug) DO NOTHING;
+
+-- 6. Create USER_SAVED_JOBS Table
+CREATE TABLE IF NOT EXISTS public.user_saved_jobs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    job_id TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('saved', 'applied', 'hidden')),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    UNIQUE(user_id, job_id)
+);
+
+-- Enable RLS for USER_SAVED_JOBS
+ALTER TABLE public.user_saved_jobs ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policy: Users can only select/insert/update/delete their own rows
+DROP POLICY IF EXISTS "Users can manage their own saved jobs" ON public.user_saved_jobs;
+CREATE POLICY "Users can manage their own saved jobs"
+    ON public.user_saved_jobs
+    FOR ALL
+    TO authenticated
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+

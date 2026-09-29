@@ -1,12 +1,27 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { Job, ConnectionState, DashboardStats } from '../types/job';
+
+// Helper to get effective date timestamp for sorting (posted_at -> falling back to detected_at)
+export const getEffectiveTimestamp = (j: Job): number => {
+  if (j.posted_at) {
+    const pTime = new Date(j.posted_at).getTime();
+    if (!isNaN(pTime) && pTime > 0) return pTime;
+  }
+  if (j.detected_at) {
+    const dTime = new Date(j.detected_at).getTime();
+    if (!isNaN(dTime) && dTime > 0) return dTime;
+  }
+  return 0;
+};
 
 export function useRealtimeJobs() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [bufferedJobs, setBufferedJobs] = useState<Job[]>([]);
   const [isPaused, setIsPaused] = useState<boolean>(false);
-  const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
+  const [connectionState, setConnectionState] = useState<ConnectionState>(
+    isSupabaseConfigured ? 'disconnected' : 'polling'
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [nextScanInSeconds, setNextScanInSeconds] = useState<number>(90);
   const [stats, setStats] = useState<DashboardStats>({
@@ -18,6 +33,10 @@ export function useRealtimeJobs() {
   const lastSeenDetectedAtRef = useRef<string | null>(null);
   const isPausedRef = useRef<boolean>(false);
   isPausedRef.current = isPaused;
+
+  const pollingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectAttemptRef = useRef<number>(0);
 
   // Next scan countdown timer
   useEffect(() => {
@@ -65,127 +84,165 @@ export function useRealtimeJobs() {
     });
   }, []);
 
-  // Backfill jobs missed during a dropped websocket connection
-  const backfillMissedJobs = useCallback(async () => {
-    if (!lastSeenDetectedAtRef.current) return;
+  // Local API Fallback fetch
+  const fetchLocalJobsFallback = useCallback(async () => {
+    try {
+      const res = await fetch('/api/jobs');
+      if (res.ok) {
+        const data: Job[] = await res.json();
+        if (data && data.length > 0) {
+          const sorted = [...data].sort((a, b) => getEffectiveTimestamp(b) - getEffectiveTimestamp(a));
+          setJobs(sorted);
+          setErrorMessage(null);
+          setConnectionState('polling');
+          if (sorted[0]?.detected_at) {
+            lastSeenDetectedAtRef.current = sorted[0].detected_at;
+          }
+          updateStats(sorted);
+          return true;
+        }
+      }
+    } catch (err: any) {
+      console.warn('[Local API Fallback Warning]:', err);
+    }
+    return false;
+  }, [updateStats]);
+
+  // Primary jobs fetcher (Supabase -> Local Fallback)
+  const fetchJobs = useCallback(async () => {
+    if (!isSupabaseConfigured) {
+      await fetchLocalJobsFallback();
+      return;
+    }
 
     try {
       const { data, error } = await supabase
         .from('jobs')
         .select('*')
-        .gt('detected_at', lastSeenDetectedAtRef.current)
-        .order('detected_at', { ascending: false });
+        .order('detected_at', { ascending: false })
+        .limit(500);
 
-      console.log('[Supabase Backfill Response]:', { data, error });
-
-      if (error) {
-        console.error('[Supabase Backfill Error]:', error);
-        throw error;
-      }
-
-      if (data && data.length > 0) {
-        const newJobs: Job[] = data.map((j) => ({ ...j, isNew: true }));
-
-        if (isPausedRef.current) {
-          setBufferedJobs((prev) => [...newJobs, ...prev]);
-        } else {
-          setJobs((prev) => {
-            const combined = [...newJobs, ...prev];
-            const unique = Array.from(new Map(combined.map((item) => [item.id, item])).values());
-            updateStats(unique);
-            return unique;
-          });
+      if (error || !data || data.length === 0) {
+        // Quietly fallback to local API endpoint without showing scary error banner
+        const loadedFallback = await fetchLocalJobsFallback();
+        if (!loadedFallback) {
+          setErrorMessage('No job rows available. Click "Run Live AI Scanner" to ingest postings.');
         }
+      } else {
+        const sorted = [...data].sort((a, b) => getEffectiveTimestamp(b) - getEffectiveTimestamp(a));
+        setJobs(sorted);
+        setErrorMessage(null);
+        setConnectionState('connected');
         lastSeenDetectedAtRef.current = data[0].detected_at;
+        updateStats(sorted);
       }
     } catch (err: any) {
-      console.error('Backfill exception:', err);
-    }
-  }, [updateStats]);
-
-  // Initial fetch with Supabase anon key + fallback loader
-  useEffect(() => {
-    async function fetchInitialJobs() {
-      try {
-        const { data, error } = await supabase
-          .from('jobs')
-          .select('*')
-          .order('detected_at', { ascending: false })
-          .limit(200);
-
-        console.log('[Supabase Anon Key Select Response]:', { data, error });
-
-        if (error) {
-          console.error('[Supabase Anon Key Select Error]:', error);
-          setErrorMessage(`Supabase Query Error: ${error.message}`);
-        } else if (data && data.length > 0) {
-          setJobs(data);
-          setErrorMessage(null);
-          lastSeenDetectedAtRef.current = data[0].detected_at;
-          updateStats(data);
-        } else {
-          console.warn('[Supabase Anon Key]: 0 rows returned from jobs table.');
-        }
-      } catch (err: any) {
-        console.error('[Supabase Query Exception]:', err);
-        setErrorMessage(`Connection Failure: ${err.message || 'Unable to connect to database stream'}`);
+      const loadedFallback = await fetchLocalJobsFallback();
+      if (!loadedFallback) {
+        setErrorMessage('Unable to connect to database stream.');
       }
     }
+  }, [updateStats, fetchLocalJobsFallback]);
 
-    fetchInitialJobs();
-  }, [updateStats]);
+  // Start quiet 15-second polling loop
+  const startPollingFallback = useCallback(() => {
+    if (pollingTimerRef.current) return;
+    pollingTimerRef.current = setInterval(() => {
+      fetchJobs();
+    }, 15000);
+  }, [fetchJobs]);
 
-  // Realtime subscription
+  // Stop polling loop
+  const stopPollingFallback = useCallback(() => {
+    if (pollingTimerRef.current) {
+      clearInterval(pollingTimerRef.current);
+      pollingTimerRef.current = null;
+    }
+  }, []);
+
+  // Initial fetch on mount
   useEffect(() => {
-    const channel = supabase
-      .channel('public:jobs_realtime')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'jobs' },
-        (payload) => {
-          console.log('[Supabase Realtime INSERT Received]:', payload);
-          const newJob = { ...(payload.new as Job), isNew: true };
-          lastSeenDetectedAtRef.current = newJob.detected_at;
+    fetchJobs();
+  }, [fetchJobs]);
 
-          if (isPausedRef.current) {
-            setBufferedJobs((prev) => [newJob, ...prev]);
-          } else {
-            setJobs((prev) => {
-              const updated = [newJob, ...prev];
-              updateStats(updated);
-              return updated;
-            });
+  // Realtime subscription setup ONLY if Supabase is configured
+  useEffect(() => {
+    if (!isSupabaseConfigured) {
+      // Run quiet local polling loop
+      startPollingFallback();
+      return () => stopPollingFallback();
+    }
+
+    let channel: any = null;
+
+    function setupSubscription() {
+      channel = supabase
+        .channel('public:jobs_realtime')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'jobs' },
+          (payload) => {
+            const newJob = { ...(payload.new as Job), isNew: true };
+            lastSeenDetectedAtRef.current = newJob.detected_at;
+
+            if (isPausedRef.current) {
+              setBufferedJobs((prev) => [newJob, ...prev]);
+            } else {
+              setJobs((prev) => {
+                const updated = [newJob, ...prev];
+                const sorted = Array.from(new Map(updated.map((item) => [item.id, item])).values());
+                sorted.sort((a, b) => getEffectiveTimestamp(b) - getEffectiveTimestamp(a));
+                updateStats(sorted);
+                return sorted;
+              });
+            }
           }
-        }
-      )
-      .subscribe((status, err) => {
-        console.log('[Supabase Realtime Subscription Status]:', status, err);
-        if (status === 'SUBSCRIBED') {
-          setConnectionState('connected');
-          setErrorMessage(null);
-        } else if (status === 'TIMED_OUT' || status === 'CLOSED') {
-          setConnectionState('reconnecting');
-          setTimeout(() => {
-            backfillMissedJobs();
-          }, 3000);
-        } else if (status === 'CHANNEL_ERROR') {
-          setConnectionState('disconnected');
-          if (err) {
-            setErrorMessage(`Realtime Error: ${err.message}`);
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            setConnectionState('connected');
+            setErrorMessage(null);
+            reconnectAttemptRef.current = 0;
+            stopPollingFallback();
+          } else if (status === 'TIMED_OUT' || status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+            setConnectionState('polling');
+            startPollingFallback();
+
+            if (!reconnectTimeoutRef.current) {
+              reconnectAttemptRef.current += 1;
+              const delay = Math.min(5000 * Math.pow(2, reconnectAttemptRef.current - 1), 60000);
+              reconnectTimeoutRef.current = setTimeout(() => {
+                reconnectTimeoutRef.current = null;
+                if (channel) {
+                  supabase.removeChannel(channel);
+                }
+                setupSubscription();
+              }, delay);
+            }
           }
-        }
-      });
+        });
+    }
+
+    setupSubscription();
 
     return () => {
-      supabase.removeChannel(channel);
+      stopPollingFallback();
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
-  }, [updateStats, backfillMissedJobs]);
+  }, [fetchJobs, updateStats, startPollingFallback, stopPollingFallback]);
 
   const flushBuffer = useCallback(() => {
     if (bufferedJobs.length === 0) return;
     setJobs((prev) => {
       const combined = [...bufferedJobs, ...prev];
       const unique = Array.from(new Map(combined.map((item) => [item.id, item])).values());
+      unique.sort((a, b) => getEffectiveTimestamp(b) - getEffectiveTimestamp(a));
       updateStats(unique);
       return unique;
     });
